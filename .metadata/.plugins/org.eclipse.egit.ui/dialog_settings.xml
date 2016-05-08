@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item value="0" key="org.eclipse.egit.ui.internal.clone.GitSelectWizardPageWizardSel"/>
+	<item value="927" key="DIALOG_WIDTH"/>
+	<item value="1|Segoe UI|9.0|0|WINDOWS|1|-15|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI" key="DIALOG_FONT_NAME"/>
+	<item value="605" key="DIALOG_HEIGHT"/>
+	<item value="506" key="DIALOG_X_ORIGIN"/>
+	<item value="122" key="DIALOG_Y_ORIGIN"/>
+	<section name="GitImportWizard">
+	</section>
+	<section name="GitCommitMessageComponent">
+	</section>
+	<section name="GitCommitSearchPage">
+		<item value="1" key="HISTORY_SIZE"/>
+		<section name="HISTORY0">
+			<section name="searchSection">
+				<item value="1" key="repositoryCount"/>
+				<item value="C:\Users\emusc_000\Documents\GitHub\cosc603spring2016_Muschelli-Medley-Quinchuela-Cosulich_FinalProject\.git" key="repository0"/>
+				<item value="false" key="regexSearch"/>
+				<item value="true" key="matchAuthor"/>
+				<item value="true" key="matchMessage"/>
+				<item value="true" key="ignoreCase"/>
+				<item value="true" key="matchParents"/>
+				<item value="false" key="allBranches"/>
+				<item value="true" key="matchCommit"/>
+				<item value="true" key="matchTree"/>
+				<item value="gitRawRevision" key="textPattern"/>
+				<item value="true" key="matchCommitter"/>
+			</section>
+		</section>
+	</section>
+</section>
