@@ -105,7 +105,8 @@ public class AbstractCanvasListener extends FreeColClientHolder {
      * @param scrollSpace The clearance from the relevant edge
      */
     private void scroll(int x, int y, int scrollSpace) {
-        Direction direction;
+        scrollThread(x, y, scrollSpace);
+		Direction direction;
         Dimension size = canvas.getSize();
         if (x < scrollSpace && y < scrollSpace) { // Upper-Left
             direction = Direction.NW;
@@ -132,12 +133,39 @@ public class AbstractCanvasListener extends FreeColClientHolder {
 
         if (direction == null) {
             stopScrollIfScrollIsActive();
-        } else if (scrollThread == null || scrollThread.isInterrupted()) {
-            scrollThread = new ScrollThread(canvas);
-            scrollThread.setDirection(direction);
-            scrollThread.start();
-        } else {
-            scrollThread.setDirection(direction);
         }
     }
+
+
+	private void scrollThread(int x, int y, int scrollSpace) {
+		Direction direction;
+		Dimension size = canvas.getSize();
+		if (x < scrollSpace && y < scrollSpace) {
+			direction = Direction.NW;
+		} else if (x >= size.width - scrollSpace && y < scrollSpace) {
+			direction = Direction.NE;
+		} else if (x >= size.width - scrollSpace && y >= size.height - scrollSpace) {
+			direction = Direction.SE;
+		} else if (x < scrollSpace && y >= size.height - scrollSpace) {
+			direction = Direction.SW;
+		} else if (y < scrollSpace) {
+			direction = Direction.N;
+		} else if (x >= size.width - scrollSpace) {
+			direction = Direction.E;
+		} else if (y >= size.height - scrollSpace) {
+			direction = Direction.S;
+		} else if (x < scrollSpace) {
+			direction = Direction.W;
+		} else {
+			direction = null;
+		}
+		if (direction == null) {
+		} else if (scrollThread == null || scrollThread.isInterrupted()) {
+			scrollThread = new ScrollThread(canvas);
+			scrollThread.setDirection(direction);
+			scrollThread.start();
+		} else {
+			scrollThread.setDirection(direction);
+		}
+	}
 }

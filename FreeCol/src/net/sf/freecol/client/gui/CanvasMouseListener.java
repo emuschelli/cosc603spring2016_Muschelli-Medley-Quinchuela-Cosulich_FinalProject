@@ -74,16 +74,8 @@ public final class CanvasMouseListener extends FreeColClientHolder
     @Override
     public void mouseClicked(MouseEvent e) {
         try {
-            if (e.getClickCount() > 1) {
-                Tile tile = canvas.convertToMapTile(e.getX(), e.getY());
-                Colony colony = tile.getColony();
-                if (colony != null) {
-                    if (FreeColDebugger.isInDebugMode(FreeColDebugger.DebugMode.MENUS)) {
-                        canvas.showForeignColony(colony);
-                    } else {
-                        canvas.showColonyPanel(colony, null);
-                    }
-                }
+            canvas(e);
+			if (e.getClickCount() > 1) {
             } else {
                 canvas.requestFocus();
             }
@@ -91,6 +83,29 @@ public final class CanvasMouseListener extends FreeColClientHolder
             logger.log(Level.WARNING, "Error in mouseClicked!", ex);
         }
     }
+
+	private void canvas(MouseEvent e) {
+		if (e.getClickCount() > 1) {
+			canvasTile(e);
+		} else {
+		}
+	}
+
+	private void canvasTile(MouseEvent e) {
+		Tile tile = canvas.convertToMapTile(e.getX(), e.getY());
+		Colony colony = tile.getColony();
+		if (colony != null) {
+			showColony(colony);
+		}
+	}
+
+	private void showColony(Colony colony) {
+		if (FreeColDebugger.isInDebugMode(FreeColDebugger.DebugMode.MENUS)) {
+			canvas.showForeignColony(colony);
+		} else {
+			canvas.showColonyPanel(colony, null);
+		}
+	}
 
     /**
      * Invoked when the mouse enters the component.
@@ -121,9 +136,8 @@ public final class CanvasMouseListener extends FreeColClientHolder
     public void mousePressed(MouseEvent e) {
         if (!e.getComponent().isEnabled()) return;
 
-        int me = e.getButton();
-        if (e.isPopupTrigger()) me = MouseEvent.BUTTON3;
-        Tile tile = canvas.convertToMapTile(e.getX(), e.getY());
+        int me = me(e);
+		Tile tile = canvas.convertToMapTile(e.getX(), e.getY());
 
         switch (me) {
         case MouseEvent.BUTTON1:
@@ -165,6 +179,13 @@ public final class CanvasMouseListener extends FreeColClientHolder
             break;
         }
     }
+
+	private int me(MouseEvent e) {
+		int me = e.getButton();
+		if (e.isPopupTrigger())
+			me = MouseEvent.BUTTON3;
+		return me;
+	}
 
     /**
      * Invoked when a mouse button was released.

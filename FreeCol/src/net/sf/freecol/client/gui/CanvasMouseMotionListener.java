@@ -72,26 +72,35 @@ public final class CanvasMouseMotionListener extends AbstractCanvasListener
         }
 
         if (canvas.isGotoStarted()) {
-            if (canvas.getActiveUnit() == null) {
-                canvas.stopGoto();
-            }
-
-            Tile tile = canvas.convertToMapTile(e.getX(), e.getY());
+            canvas(e);
+			Tile tile = canvas.convertToMapTile(e.getX(), e.getY());
 
             if (tile != null) {
                 if (lastTile != tile) {
-                    Unit active = canvas.getActiveUnit();
                     lastTile = tile;
-                    if (active != null && active.getTile() != tile) {
-                        PathNode dragPath = active.findPath(tile);
-                        canvas.setGotoPath(dragPath);
-                    } else {
-                        canvas.setGotoPath(null);
-                    }
                 }
             }
         }
     }
+
+
+	private void canvas(MouseEvent e) {
+		if (canvas.getActiveUnit() == null) {
+			canvas.stopGoto();
+		}
+		Tile tile = canvas.convertToMapTile(e.getX(), e.getY());
+		if (tile != null) {
+			if (lastTile != tile) {
+				Unit active = canvas.getActiveUnit();
+				if (active != null && active.getTile() != tile) {
+					PathNode dragPath = active.findPath(tile);
+					canvas.setGotoPath(dragPath);
+				} else {
+					canvas.setGotoPath(null);
+				}
+			}
+		}
+	}
 
     /**
      * Invoked when the mouse has been dragged.

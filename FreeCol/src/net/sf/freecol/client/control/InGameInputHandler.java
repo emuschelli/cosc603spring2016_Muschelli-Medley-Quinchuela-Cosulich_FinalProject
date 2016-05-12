@@ -79,6 +79,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 
+// TODO: Auto-generated Javadoc
 /**
  * Handle the network messages that arrives while in the game.
  *
@@ -99,15 +100,21 @@ import org.w3c.dom.NodeList;
  */
 public final class InGameInputHandler extends ClientInputHandler {
 
+    /** The Constant logger. */
     private static final Logger logger = Logger.getLogger(InGameInputHandler.class.getName());
 
+    /** The close menus runnable. */
     // A bunch of predefined non-closure runnables.
     private final Runnable closeMenusRunnable = () -> {
         igc().closeMenus();
     };
+    
+    /** The display model messages runnable. */
     private final Runnable displayModelMessagesRunnable = () -> {
         igc().displayModelMessages(false);
     };
+    
+    /** The reconnect runnable. */
     private final Runnable reconnectRunnable = () -> {
         igc().reconnect();
     };
