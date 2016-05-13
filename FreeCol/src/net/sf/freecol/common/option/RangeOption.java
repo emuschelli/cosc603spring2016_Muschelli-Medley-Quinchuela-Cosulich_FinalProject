@@ -41,7 +41,7 @@ import net.sf.freecol.common.model.Specification;
 public class RangeOption extends SelectOption {
 
     @SuppressWarnings("unused")
-    private static final Logger logger = Logger.getLogger(RangeOption.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(RangeOption.class.getName());
 
 
     /**
@@ -63,7 +63,7 @@ public class RangeOption extends SelectOption {
     public int getValueRank() {
         int rank = 0;
         for (Integer i : getItemValues().keySet()) {
-            if (i == getValue()) return rank;
+            if (i.equals(getValue())) return rank;
             rank++;
         }
         return 0; // Actually invalid

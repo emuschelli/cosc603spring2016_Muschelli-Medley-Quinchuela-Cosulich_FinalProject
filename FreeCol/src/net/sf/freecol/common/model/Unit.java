@@ -61,7 +61,7 @@ import org.w3c.dom.Element;
 public class Unit extends GoodsLocation
     implements Consumer, Locatable, Movable, Nameable, Ownable {
 
-    private static final Logger logger = Logger.getLogger(Unit.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Unit.class.getName());
 
     /**
      * A large number of turns, denoting pathfinding failure.  Do not use
@@ -74,11 +74,11 @@ public class Unit extends GoodsLocation
     public static final String ROLE_CHANGE = "ROLE_CHANGE";
 
     /** Compare units by location. */
-    public static final Comparator<Unit> locComparator
+    public static final Comparator<Unit> LOCCOMPARATOR
         = Comparator.comparingInt(u -> Location.getRank(u));
 
     /** A comparator to compare units by type then role. */
-    public static final Comparator<Unit> typeRoleComparator
+    public static final Comparator<Unit> TYPEROLECOMPARATOR
         = Comparator.comparing(Unit::getType)
             .thenComparing(Comparator.comparing(Unit::getRole));
     
@@ -616,7 +616,7 @@ public class Unit extends GoodsLocation
         case SKIPPED:
             return getState() == UnitState.ACTIVE;
         default:
-            logger.warning("Invalid unit state: " + s);
+            LOGGER.warning("Invalid unit state: " + s);
             return false;
         }
     }
@@ -735,7 +735,7 @@ public class Unit extends GoodsLocation
         if (oldOwner == owner) return;
 
         if (oldOwner == null) {
-            logger.warning("Unit " + getId()
+            LOGGER.warning("Unit " + getId()
                 + " had no owner, when changing owner to " + owner.getId());
         }
 
@@ -902,7 +902,7 @@ public class Unit extends GoodsLocation
     public void setLocationNoUpdate(Location newLocation) {
         this.location = newLocation;
         if (newLocation instanceof Colony) {
-            logger.warning("Unit->Colony " + this.getId()
+            LOGGER.warning("Unit->Colony " + this.getId()
                 + " " + ((Colony)newLocation).getId() + "\n"
                 + net.sf.freecol.common.debug.FreeColDebugger.stackTraceToString());
         }                
@@ -3807,7 +3807,7 @@ public class Unit extends GoodsLocation
 
         if (newLocation == this.location) return true;
         if (newLocation != null && !newLocation.canAdd(this)) {
-            logger.warning("Can not add " + this + " to "
+            LOGGER.warning("Can not add " + this + " to "
                 + newLocation.getId());
             return false;
         }
@@ -3953,7 +3953,7 @@ public class Unit extends GoodsLocation
                 return true;
             }
         } else {
-            logger.warning("Tried to remove from unit: "
+            LOGGER.warning("Tried to remove from unit: "
                 + locatable);
         }
         return false;
@@ -4112,10 +4112,10 @@ public class Unit extends GoodsLocation
         if (this.role == null) {
             if (fix) {
                 this.role = getSpecification().getDefaultRole();
-                logger.warning("Fixed missing role for: " + getId());
+                LOGGER.warning("Fixed missing role for: " + getId());
                 result = 0;
             } else {
-                logger.warning("Missing role for: " + getId());
+                LOGGER.warning("Missing role for: " + getId());
                 result = -1;
             }
         }
@@ -4123,11 +4123,11 @@ public class Unit extends GoodsLocation
             if (!((FreeColGameObject)this.destination).isInitialized()) {
                 if (fix) {
                     this.destination = null;
-                    logger.warning("Cleared uninitialized destination for: "
+                    LOGGER.warning("Cleared uninitialized destination for: "
                         + getId());
                     result = Math.min(result, 0);
                 } else {
-                    logger.warning("Uninitialized destination for: "
+                    LOGGER.warning("Uninitialized destination for: "
                         + getId());
                     result = -1;
                 }
@@ -4139,10 +4139,10 @@ public class Unit extends GoodsLocation
             // improvement.
             if (fix) {
                 this.state = UnitState.ACTIVE;
-                logger.warning("Made improving unit active: " + getId());
+                LOGGER.warning("Made improving unit active: " + getId());
                 result = Math.min(result, 0);
             } else {
-                logger.warning("Improving unit with no improvement: "
+                LOGGER.warning("Improving unit with no improvement: "
                     + getId());
                 result = -1;
             }
@@ -4530,7 +4530,7 @@ public class Unit extends GoodsLocation
                 if (owner.isIndian()) {
                     role = spec.getRole("model.role.mountedBrave");
                 } else if (owner.isREF() && hasAbility(Ability.REF_UNIT)) {
-                    logger.warning("Undefined role: REF Scout");
+                    LOGGER.warning("Undefined role: REF Scout");
                 } else {
                     role = spec.getRole("model.role.scout");
                 }

@@ -69,7 +69,7 @@ import net.sf.freecol.server.model.ServerPlayer;
  */
 public class REFAIPlayer extends EuropeanAIPlayer {
 
-    private static final Logger logger = Logger.getLogger(REFAIPlayer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(REFAIPlayer.class.getName());
 
     /** Limit on the number of REF units chasing a single hostile unit. */
     private static final int UNIT_USAD_THRESHOLD = 5;
@@ -136,7 +136,7 @@ public class REFAIPlayer extends EuropeanAIPlayer {
         }
     }
 
-    private static final int seekAndDestroyRange = 12;
+    private static final int SEEKANDDESTROYRANGE = 12;
 
     /** Map of target to count. */
     private final Map<Location, Integer> targetMap = new HashMap<>();
@@ -198,7 +198,7 @@ public class REFAIPlayer extends EuropeanAIPlayer {
         // but decrease for fortifications.
         // FIXME: use Modifiers?
         final int percentTwiddle = 20; // Perturb score by +/-20%
-        int[] twiddle = randomInts(logger, "REF target twiddle",
+        int[] twiddle = randomInts(LOGGER, "REF target twiddle",
                                    getAIRandom(), 2*percentTwiddle+1,
                                    targets.size());
         int twidx = 0;
@@ -227,7 +227,7 @@ public class REFAIPlayer extends EuropeanAIPlayer {
         LogBuilder lb = new LogBuilder(64);
         lb.add("REF found colony targets:");
         for (TargetTuple t : targets) lb.add(" ", t.colony, "(", t.score, ")");
-        lb.log(logger, Level.FINE);
+        lb.log(LOGGER, Level.FINE);
         return targets;
     }
 
@@ -263,24 +263,24 @@ public class REFAIPlayer extends EuropeanAIPlayer {
         AIUnit aiUnit = find(getAIUnits(), aiu -> !aiu.getUnit().isNaval()
             && aiu.getUnit().isOffensiveUnit());
         if (aiUnit == null) {
-            logger.warning("REF has no army?!?");
+            LOGGER.warning("REF has no army?!?");
             return false;
         }
         final Unit unit = aiUnit.getUnit();
         final Unit carrier = unit.getCarrier();
         if (carrier == null) {
-            logger.warning("REF land unit not on a carrier: " + unit);
+            LOGGER.warning("REF land unit not on a carrier: " + unit);
             return false;
         }
         final AIUnit aiCarrier = aiMain.getAIUnit(carrier);
         if (aiCarrier == null) {
-            logger.warning("REF naval unit missing: " + carrier);
+            LOGGER.warning("REF naval unit missing: " + carrier);
             return false;
         }
 
         List<TargetTuple> targets = findColonyTargets(aiUnit, true, aiCarrier);
         if (targets.isEmpty()) {
-            logger.warning("REF found no targets.");
+            LOGGER.warning("REF found no targets.");
             return false;
         }
 
@@ -428,7 +428,7 @@ public class REFAIPlayer extends EuropeanAIPlayer {
             Tile start;
             if (enemy == null) {
                 if ((m = getWanderHostileMission(aiu)) != null) {
-                    start = getRandomMember(logger, "REF patrol entry",
+                    start = getRandomMember(LOGGER, "REF patrol entry",
                                             entries, aiRandom);
                     u.setEntryLocation(start);
                     lb.add("\n  Patrol from ", start, " with ", m);
@@ -443,7 +443,7 @@ public class REFAIPlayer extends EuropeanAIPlayer {
                 }
             }
         }
-        lb.log(logger, Level.FINE);
+        lb.log(LOGGER, Level.FINE);
         return true;
     }
 
@@ -572,7 +572,7 @@ public class REFAIPlayer extends EuropeanAIPlayer {
         // - go idle in a port
         for (AIUnit aiu : land) {
             Location target = UnitSeekAndDestroyMission.findTarget(aiu, 
-                seekAndDestroyRange, false);
+                SEEKANDDESTROYRANGE, false);
             if (target != null) {
                 int count = (targetMap.containsKey(target))
                     ? targetMap.get(target) : 0;
@@ -831,7 +831,7 @@ public class REFAIPlayer extends EuropeanAIPlayer {
                         // Bleed off excessive defenders.
                         if (u.isAtLocation(colony)
                             && !colony.isBadlyDefended()
-                            && randomInt(logger, "REF defend " + colony.getName(), 
+                            && randomInt(LOGGER, "REF defend " + colony.getName(), 
                                          getAIRandom(), 3) == 0) {
                             land.add(aiu);
                         } else {
@@ -876,7 +876,7 @@ public class REFAIPlayer extends EuropeanAIPlayer {
     public void startWorking() {
         final Player player = getPlayer();
         if (!player.isWorkForREF()) {
-            logger.warning("No work for REF: " + player);
+            LOGGER.warning("No work for REF: " + player);
             return;
         }
 
@@ -898,7 +898,7 @@ public class REFAIPlayer extends EuropeanAIPlayer {
         if (!land.isEmpty() && !transport.isEmpty()) {
             LogBuilder lb = new LogBuilder(256);
             allocateTransportables(land, transport, lb);
-            lb.log(logger, Level.FINE);
+            lb.log(LOGGER, Level.FINE);
         }
     }
 

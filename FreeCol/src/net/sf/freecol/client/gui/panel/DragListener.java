@@ -41,7 +41,7 @@ import net.sf.freecol.common.model.Unit;
  */
 public final class DragListener extends MouseAdapter {
 
-    private static final Logger logger = Logger.getLogger(DragListener.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DragListener.class.getName());
 
     private final FreeColPanel parentPanel;
 
@@ -76,7 +76,7 @@ public final class DragListener extends MouseAdapter {
 
         if (e.getButton() == MouseEvent.BUTTON3 || e.isPopupTrigger()) {
             if (!parentPanel.isEditable()) { // No panel when not editable
-                logger.warning("Button3 disabled on non-editable panel: "
+                LOGGER.warning("Button3 disabled on non-editable panel: "
                     + parentPanel);
                 return;
             }

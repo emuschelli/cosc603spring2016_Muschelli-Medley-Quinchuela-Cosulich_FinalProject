@@ -43,7 +43,7 @@ import net.sf.freecol.common.networking.Connection;
  */
 public final class MetaServer extends Thread {
 
-    private static final Logger logger = Logger.getLogger(MetaServer.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MetaServer.class.getName());
 
     private static final int REMOVE_DEAD_SERVERS_INTERVAL = 120000;
 
@@ -73,32 +73,24 @@ public final class MetaServer extends Thread {
      * @param args The command-line options.
      */
     public static void main(String[] args) {
-        MetaServer metaServer = metaServer(args);
-		metaServer.start();
+        int port = -1;
+        try {
+            port = Integer.parseInt(args[0]);
+        } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
+            System.out.println("Usage: java net.sf.freecol.metaserver.MetaServer PORT_NUMBER");
+            System.exit(-1);
+        }
+
+        MetaServer metaServer = null;
+        try {
+            metaServer = new MetaServer(port);
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not create MetaServer!", e);
+            System.exit(-1);
+        }
+
+        metaServer.start();
     }
-
-	private static MetaServer metaServer(String[] args) {
-		int port = port(args);
-		MetaServer metaServer = null;
-		try {
-			metaServer = new MetaServer(port);
-		} catch (IOException e) {
-			logger.log(Level.WARNING, "Could not create MetaServer!", e);
-			System.exit(-1);
-		}
-		return metaServer;
-	}
-
-	private static int port(String[] args) {
-		int port = -1;
-		try {
-			port = Integer.parseInt(args[0]);
-		} catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
-			System.out.println("Usage: java net.sf.freecol.metaserver.MetaServer PORT_NUMBER");
-			System.exit(-1);
-		}
-		return port;
-	}
 
     /**
      * Creates a new network server. Use {@link #run metaServer.start()} to
@@ -121,7 +113,7 @@ public final class MetaServer extends Thread {
                 try {
                     mr.removeDeadServers();
                 } catch (Exception ex) {
-                    logger.log(Level.WARNING, "Could not remove servers.", ex);
+                    LOGGER.log(Level.WARNING, "Could not remove servers.", ex);
                 }
             }
         }, REMOVE_DEAD_SERVERS_INTERVAL, REMOVE_DEAD_SERVERS_INTERVAL);
@@ -136,30 +128,19 @@ public final class MetaServer extends Thread {
     @Override
     public void run() {
         while (running) {
-            connections();
+            Socket clientSocket = null;
+            try {
+                clientSocket = serverSocket.accept();
+                LOGGER.info("Client connection from: "
+                    + clientSocket.getInetAddress().toString());
+                Connection connection = new Connection(clientSocket,
+                    getNetworkHandler(), FreeCol.METASERVER_THREAD);
+                connections.put(clientSocket, connection);
+            } catch (IOException e) {
+                LOGGER.log(Level.WARNING, "Meta-run", e);
+            }
         }
     }
-
-	private void connections() {
-		Socket clientSocket = clientSocket();
-		try {
-			logger.info("Client connection from: " + clientSocket.getInetAddress().toString());
-			Connection connection = new Connection(clientSocket, getNetworkHandler(), FreeCol.METASERVER_THREAD);
-			connections.put(clientSocket, connection);
-		} catch (IOException e) {
-			logger.log(Level.WARNING, "Meta-run", e);
-		}
-	}
-
-	private Socket clientSocket() {
-		Socket clientSocket = null;
-		try {
-			clientSocket = serverSocket.accept();
-		} catch (IOException e) {
-			logger.log(Level.WARNING, "Meta-run", e);
-		}
-		return clientSocket;
-	}
 
     /**
      * Gets the control object that handles the network requests.
@@ -195,26 +176,23 @@ public final class MetaServer extends Thread {
     public void shutdown() {
         running = false;
 
-        serverSocket();
-		Connection c = c();
-		logger.info("Server shutdown.");
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            LOGGER.log(Level.WARNING, "Could not close the server socket!", e);
+        }
+
+        // Close all connections and clear hashmap
+        Iterator<Connection> iterator = getConnectionIterator();
+        while(iterator.hasNext()){
+        	Connection c = iterator.next();
+        	if( c!= null)
+        		c.close();
+        }
+        connections.clear();
+        
+        LOGGER.info("Server shutdown.");
     }
-
-	private void serverSocket() {
-		try {
-			serverSocket.close();
-		} catch (IOException e) {
-			logger.log(Level.WARNING, "Could not close the server socket!", e);
-		}
-	}
-
-	private Connection c() {
-		Connection c;
-		while ((c = connections.remove(0)) != null) {
-			c.close();
-		}
-		return c;
-	}
 
     /**
      * Gets a <code>Connection</code> identified by a <code>Socket</code>.

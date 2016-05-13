@@ -186,7 +186,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if it is our turn.
      */
     private boolean requireOurTurn() {
-        if (currentPlayerIsMyPlayer()) return true;
+        if (currentPlayerIsMyPlayer()) {
+			return true;
+		}
         if (getFreeColClient().isInGame()) {
             getGUI().showInformationMessage("info.notYourTurn");
         }
@@ -271,10 +273,14 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the assignment succeeds.
      */
     private boolean askAssignTradeRoute(Unit unit, TradeRoute tradeRoute) {
-        if (tradeRoute == unit.getTradeRoute()) return true;
+        if (tradeRoute == unit.getTradeRoute()) {
+			return true;
+		}
 
         if (tradeRoute != null && unit.getTradeRoute() != null) {
-            if (!getGUI().confirmClearTradeRoute(unit)) return false;
+            if (!getGUI().confirmClearTradeRoute(unit)) {
+				return false;
+			}
         }
 
         return askServer().assignTradeRoute(unit, tradeRoute)
@@ -298,7 +304,9 @@ public final class InGameController extends FreeColClientHolder {
         } else if (price > 0) { // for sale
             ClaimAction act
                 = getGUI().getClaimChoice(tile, player, price, owner);
-            if (act == null) return false; // Cancelled
+            if (act == null) {
+				return false;
+			} // Cancelled
             switch (act) {
             case CLAIM_ACCEPT: // accepted price
                 break;
@@ -324,9 +332,13 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the unit now has no destination or trade route.
      */
     private boolean askClearGotoOrders(Unit unit) {
-        if (!askAssignTradeRoute(unit, null)) return false;
+        if (!askAssignTradeRoute(unit, null)) {
+			return false;
+		}
 
-        if (unit.getDestination() == null) return true;
+        if (unit.getDestination() == null) {
+			return true;
+		}
 
         if (askSetDestination(unit, null)) {
             getGUI().clearGotoPath();
@@ -352,8 +364,12 @@ public final class InGameController extends FreeColClientHolder {
             && unit.getLocation() == carrier) {
             sound("sound.event.loadCargo");
             unitWas.fireChanges();
-            if (colonyWas != null) colonyWas.fireChanges();
-            if (europeWas != null) europeWas.fireChanges();
+            if (colonyWas != null) {
+				colonyWas.fireChanges();
+			}
+            if (europeWas != null) {
+				europeWas.fireChanges();
+			}
             return true;
         }
         return false;
@@ -371,7 +387,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     private Unit askEmigrate(Europe europe, int slot) {
         if (europe == null
-            || !MigrationType.validMigrantSlot(slot)) return null;
+            || !MigrationType.validMigrantSlot(slot)) {
+			return null;
+		}
 
         EuropeWas europeWas = new EuropeWas(europe);
         Unit newUnit = null;
@@ -398,7 +416,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     private void emigration(Player player, int n, boolean fountainOfYouth) {
         final Europe europe = player.getEurope();
-        if (europe == null) return;
+        if (europe == null) {
+			return;
+		}
 
         for (; n > 0 || player.checkEmigrate() ; n--) {
             if (!allSame(europe.getRecruitables())) {
@@ -412,7 +432,9 @@ public final class InGameController extends FreeColClientHolder {
                 return;
             }
             Unit u = askEmigrate(europe, Europe.MigrationType.getDefaultSlot());
-            if (u == null) break; // Give up on failure, try again next turn
+            if (u == null) {
+				break;
+			} // Give up on failure, try again next turn
             player.addModelMessage(player.getEmigrationMessage(u));
         }
     }
@@ -429,11 +451,15 @@ public final class InGameController extends FreeColClientHolder {
     private boolean askLoadGoods(Location loc, GoodsType type, int amount,
                                  Unit carrier) {
         TradeLocation trl = carrier.getTradeLocation();
-        if (trl == null) return false;
+        if (trl == null) {
+			return false;
+		}
 
         // Size check, if there are spare holds they can be filled, but...
         int loadable = carrier.getLoadableAmount(type);
-        if (amount > loadable) amount = loadable;
+        if (amount > loadable) {
+			amount = loadable;
+		}
 
         final Player player = carrier.getOwner();
         final Market market = player.getMarket();
@@ -441,7 +467,9 @@ public final class InGameController extends FreeColClientHolder {
 
         if (carrier.isInEurope()) {
             // Are the goods boycotted?
-            if (!player.canTrade(type)) return false;
+            if (!player.canTrade(type)) {
+				return false;
+			}
 
             // Check that the purchase is funded.
             if (!player.checkGold(market.getBidPrice(type, amount))) {
@@ -454,7 +482,9 @@ public final class InGameController extends FreeColClientHolder {
         int oldAmount = carrier.getGoodsContainer().getGoodsCount(type);
         if (askServer().loadGoods(loc, type, amount, carrier)
             && carrier.getGoodsContainer().getGoodsCount(type) != oldAmount) {
-            if (marketWas != null) marketWas.fireChanges(type, amount);
+            if (marketWas != null) {
+				marketWas.fireChanges(type, amount);
+			}
             return true;
         }
         return false;
@@ -490,7 +520,9 @@ public final class InGameController extends FreeColClientHolder {
         int oldAmount = carrier.getGoodsContainer().getGoodsCount(type);
         if (askServer().unloadGoods(type, amount, carrier)
             && carrier.getGoodsContainer().getGoodsCount(type) != oldAmount) {
-            if (marketWas != null) marketWas.fireChanges(type, -amount);
+            if (marketWas != null) {
+				marketWas.fireChanges(type, -amount);
+			}
             return true;
         }
         return false;
@@ -523,7 +555,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     private void autoSaveGame () {
         final Game game = getGame();
-        if (game == null) return;
+        if (game == null) {
+			return;
+		}
 
         // unconditional save per round (fixed file "last-turn")
         final ClientOptions options = getClientOptions();
@@ -702,7 +736,9 @@ public final class InGameController extends FreeColClientHolder {
      *     reached their destination and are free to move again.
      */
     private boolean doExecuteGotoOrders() {
-        if (getGUI().isShowingSubPanel()) return false; // Clear the panel first
+        if (getGUI().isShowingSubPanel()) {
+			return false;
+		} // Clear the panel first
 
         final Player player = getMyPlayer();
         final Unit active = getGUI().getActiveUnit();
@@ -717,7 +753,9 @@ public final class InGameController extends FreeColClientHolder {
                 .filter(u -> u.isReadyToTrade() && player.owns(u)),
                 tradeRouteUnitComparator)) {
             getGUI().setActiveUnit(unit);
-            if (moveToDestination(unit, messages)) stillActive = unit;
+            if (moveToDestination(unit, messages)) {
+				stillActive = unit;
+			}
         }
         if (!messages.isEmpty()) {
             for (ModelMessage m : messages) {
@@ -732,7 +770,9 @@ public final class InGameController extends FreeColClientHolder {
         // The active unit might also be a going-to unit.  Make sure it
         // gets processed first.  setNextGoingToUnit will fail harmlessly
         // if it is not a going-to unit so this is safe.
-        if (active != null) player.setNextGoingToUnit(active);
+        if (active != null) {
+			player.setNextGoingToUnit(active);
+		}
 
         // Process all units.
         boolean fail = false;
@@ -740,7 +780,9 @@ public final class InGameController extends FreeColClientHolder {
             Unit unit = player.getNextGoingToUnit();
             getGUI().setActiveUnit(unit);
             // Move the unit as much as possible
-            if (moveToDestination(unit, null)) stillActive = unit;
+            if (moveToDestination(unit, null)) {
+				stillActive = unit;
+			}
 
             // Might have LCR messages to display
             displayModelMessages(false, false);
@@ -786,7 +828,9 @@ public final class InGameController extends FreeColClientHolder {
         // Make sure all goto orders are complete before ending turn, and
         // that nothing (like a LCR exploration) has cancelled the end turn.
         if (!doExecuteGotoOrders()
-            || moveMode.ordinal() < MoveMode.END_TURN.ordinal()) return false;
+            || moveMode.ordinal() < MoveMode.END_TURN.ordinal()) {
+			return false;
+		}
 
         // Check for desync as last thing!
         if (FreeColDebugger.isInDebugMode(FreeColDebugger.DebugMode.DESYNC)
@@ -834,7 +878,9 @@ public final class InGameController extends FreeColClientHolder {
         // Make sure the active unit is done.
         final Player player = getMyPlayer();
         Unit unit = getGUI().getActiveUnit();
-        if (unit != null && unit.couldMove()) return false;
+        if (unit != null && unit.couldMove()) {
+			return false;
+		}
 
         // Flush any outstanding orders once the mode is raised.
         if (moveMode != MoveMode.NEXT_ACTIVE_UNIT
@@ -852,7 +898,9 @@ public final class InGameController extends FreeColClientHolder {
         getGUI().setActiveUnit(null);
 
         // No active units left.  Do the goto orders.
-        if (!doExecuteGotoOrders()) return true;
+        if (!doExecuteGotoOrders()) {
+			return true;
+		}
 
         // If not already ending the turn, use the fallback tile if
         // supplied, then check for automatic end of turn, otherwise
@@ -1135,7 +1183,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     private boolean movePath(Unit unit, PathNode path) {
         for (; path != null; path = path.next) {
-            if (unit.isAtLocation(path.getLocation())) continue;
+            if (unit.isAtLocation(path.getLocation())) {
+				continue;
+			}
 
             if (path.getLocation() instanceof Europe) {
                 if (unit.hasTile()
@@ -1189,7 +1239,9 @@ public final class InGameController extends FreeColClientHolder {
         Tile tile = unit.getTile();
         Tile target = tile.getNeighbourOrNull(direction);
         Unit u = target.getFirstUnit();
-        if (u == null || unit.getOwner().owns(u)) return false;
+        if (u == null || unit.getOwner().owns(u)) {
+			return false;
+		}
 
         askClearGotoOrders(unit);
         if (getGUI().confirmHostileAction(unit, target)
@@ -1215,11 +1267,15 @@ public final class InGameController extends FreeColClientHolder {
         Tile target = tile.getNeighbourOrNull(direction);
         Settlement settlement = target.getSettlement();
         if (settlement == null
-            || unit.getOwner().owns(settlement)) return false;
+            || unit.getOwner().owns(settlement)) {
+			return false;
+		}
 
         ArmedUnitSettlementAction act
             = getGUI().getArmedUnitSettlementChoice(settlement);
-        if (act == null) return true; // Cancelled
+        if (act == null) {
+			return true;
+		} // Cancelled
         switch (act) {
         case SETTLEMENT_ATTACK:
             if (getGUI().confirmHostileAction(unit, target)
@@ -1239,7 +1295,9 @@ public final class InGameController extends FreeColClientHolder {
                 : (settlement instanceof IndianSettlement)
                 ? getGUI().confirmNativeTribute(unit, (IndianSettlement)settlement)
                 : -1;
-            if (amount <= 0) return true; // Cancelled
+            if (amount <= 0) {
+				return true;
+			} // Cancelled
             return moveTribute(unit, amount, direction);
 
         default:
@@ -1262,14 +1320,18 @@ public final class InGameController extends FreeColClientHolder {
                                   DiplomaticTrade dt) {
         Settlement settlement = getSettlementAt(unit.getTile(), direction);
         if (settlement == null
-            || !(settlement instanceof Colony)) return false;
+            || !(settlement instanceof Colony)) {
+			return false;
+		}
         Colony colony = (Colony)settlement;
 
         // Can not negotiate with the REF.
         final Game game = getGame();
         final Player player = unit.getOwner();
         final Player other = colony.getOwner();
-        if (other == player.getREFPlayer()) return false;
+        if (other == player.getREFPlayer()) {
+			return false;
+		}
 
         StringTemplate nation = other.getNationLabel();
         while (dt != null) {
@@ -1307,7 +1369,9 @@ public final class InGameController extends FreeColClientHolder {
         unit.setStateToAllChildren(UnitState.ACTIVE);
         final List<Unit> disembarkable = transform(unit.getUnitList(),
             u -> u.getMoveType(tile).isProgress(), Collectors.toList());
-        if (disembarkable.isEmpty()) return false; // Fail, did not find one
+        if (disembarkable.isEmpty()) {
+			return false;
+		} // Fail, did not find one
         if (disembarkable.size() == 1) {
             if (getGUI().confirm(tile,
                             StringTemplate.key("disembark.text"),
@@ -1357,7 +1421,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     private boolean moveEmbark(Unit unit, Direction direction) {
         if (unit.getColony() != null
-            && !getGUI().confirmLeaveColony(unit)) return false;
+            && !getGUI().confirmLeaveColony(unit)) {
+			return false;
+		}
 
         Tile sourceTile = unit.getTile();
         Tile destinationTile = sourceTile.getNeighbourOrNull(direction);
@@ -1376,7 +1442,9 @@ public final class InGameController extends FreeColClientHolder {
                                     Messages.message("embark.text"),
                                     unit,
                                     "none", choices);
-            if (carrier == null) return true; // User cancelled
+            if (carrier == null) {
+				return true;
+			} // User cancelled
         }
 
         // Proceed to embark
@@ -1475,7 +1543,9 @@ public final class InGameController extends FreeColClientHolder {
         askClearGotoOrders(unit);
         // Refresh knowledge of settlement skill.  It may have been
         // learned by another player.
-        if (!askServer().askSkill(unit, direction)) return false;
+        if (!askServer().askSkill(unit, direction)) {
+			return false;
+		}
 
         IndianSettlement settlement
             = (IndianSettlement)getSettlementAt(unit.getTile(), direction);
@@ -1523,7 +1593,9 @@ public final class InGameController extends FreeColClientHolder {
                 : Collections.<Unit>emptyList();
             for (Unit u : waiting) {
                 if (u.getState() != UnitState.SENTRY
-                    || !unit.couldCarry(u)) continue;
+                    || !unit.couldCarry(u)) {
+					continue;
+				}
                 try {
                     askEmbark(u, unit);
                 } finally {
@@ -1534,7 +1606,9 @@ public final class InGameController extends FreeColClientHolder {
                 }
             }
             // Boarding consumed this unit's moves.
-            if (unit.getMovesLeft() <= 0) return false;
+            if (unit.getMovesLeft() <= 0) {
+				return false;
+			}
         }
 
         // Ask the server
@@ -1593,7 +1667,9 @@ public final class InGameController extends FreeColClientHolder {
 
         ScoutColonyAction act
             = getGUI().getScoutForeignColonyChoice(colony, unit, canNeg);
-        if (act == null) return true; // Cancelled
+        if (act == null) {
+			return true;
+		} // Cancelled
         switch (act) {
         case SCOUT_COLONY_ATTACK:
             return moveAttackSettlement(unit, direction);
@@ -1635,17 +1711,23 @@ public final class InGameController extends FreeColClientHolder {
         askClearGotoOrders(unit);
 
         // Offer the choices.
-        if (!askServer().scoutSettlement(unit, direction)) return false;
+        if (!askServer().scoutSettlement(unit, direction)) {
+			return false;
+		}
         int count = player.getNationSummary(settlement.getOwner())
             .getNumberOfSettlements();
         String number = (count <= 0) ? Messages.message("many")
             : Integer.toString(count);
         ScoutIndianSettlementAction act
             = getGUI().getScoutIndianSettlementChoice(settlement, number);
-        if (act == null) return true; // Cancelled
+        if (act == null) {
+			return true;
+		} // Cancelled
         switch (act) {
         case SCOUT_SETTLEMENT_ATTACK:
-            if (!getGUI().confirmPreCombat(unit, tile)) return true;
+            if (!getGUI().confirmPreCombat(unit, tile)) {
+				return true;
+			}
             askServer().attack(unit, direction);
             return false;
         case SCOUT_SETTLEMENT_SPEAK:
@@ -1739,11 +1821,15 @@ public final class InGameController extends FreeColClientHolder {
             boolean buy = results[0] && unit.hasSpaceLeft();
             boolean sel = results[1] && unit.hasGoodsCargo();
             boolean gif = results[2] && unit.hasGoodsCargo();
-            if (!buy && !sel && !gif) break;
+            if (!buy && !sel && !gif) {
+				break;
+			}
 
             TradeAction act = getGUI().getIndianSettlementTradeChoice(is,
                 template, buy, sel, gif);
-            if (act == null) break;
+            if (act == null) {
+				break;
+			}
             StringTemplate t = null;
             switch (act) {
             case BUY:
@@ -1779,11 +1865,15 @@ public final class InGameController extends FreeColClientHolder {
                 results = null;
                 break;
             }
-            if (template == abortTrade) template = baseTemplate;
+            if (template == abortTrade) {
+				template = baseTemplate;
+			}
         }
 
         askServer().closeTransactionSession(unit, is);
-        if (unit.getMovesLeft() > 0) getGUI().setActiveUnit(unit); // No trade?
+        if (unit.getMovesLeft() > 0) {
+			getGUI().setActiveUnit(unit);
+		} // No trade?
         return false;
     }
 
@@ -1843,7 +1933,9 @@ public final class InGameController extends FreeColClientHolder {
                 Messages.message("buyProposition.text"), is, "nothing",
                 toList(map(forSale,
                         g -> new ChoiceItem<>(Messages.message(g.getLabel()), g))));
-            if (goods == null) break; // Trade aborted by the player
+            if (goods == null) {
+				break;
+			} // Trade aborted by the player
 
             int gold = -1; // Initially ask for a price
             for (;;) {
@@ -1856,7 +1948,9 @@ public final class InGameController extends FreeColClientHolder {
                 boolean canBuy = player.checkGold(gold);
                 TradeBuyAction act
                     = getGUI().getBuyChoice(unit, is, goods, gold, canBuy);
-                if (act == null) break; // User cancelled
+                if (act == null) {
+					break;
+				} // User cancelled
                 switch (act) {
                 case BUY: // Accept price, make purchase
                     return (askServer().buyFromSettlement(unit,
@@ -1891,7 +1985,9 @@ public final class InGameController extends FreeColClientHolder {
                 Messages.message("sellProposition.text"), is, "nothing",
                 toList(map(unit.getGoodsList(), g ->
                         new ChoiceItem<>(Messages.message(g.getLabel(true)), g))));
-            if (goods == null) break; // Trade aborted by the player
+            if (goods == null) {
+				break;
+			} // Trade aborted by the player
 
             int gold = -1; // Initially ask for a price
             for (;;) {
@@ -1904,7 +2000,9 @@ public final class InGameController extends FreeColClientHolder {
                 // Show dialog for sale proposal
                 TradeSellAction act
                     = getGUI().getSellChoice(unit, is, goods, gold);
-                if (act == null) break; // Cancelled
+                if (act == null) {
+					break;
+				} // Cancelled
                 switch (act) {
                 case SELL: // Accepted price, make the sale
                     return (askServer().sellToSettlement(unit, is, goods, gold))
@@ -1998,7 +2096,9 @@ public final class InGameController extends FreeColClientHolder {
         // Offer the choices.
         MissionaryAction act = getGUI().getMissionaryChoice(unit, settlement,
             canEstablish, canDenounce);
-        if (act == null) return true;
+        if (act == null) {
+			return true;
+		}
         switch (act) {
         case MISSIONARY_ESTABLISH_MISSION: case MISSIONARY_DENOUNCE_HERESY:
             if (askServer().missionary(unit, direction,
@@ -2014,7 +2114,9 @@ public final class InGameController extends FreeColClientHolder {
                 unit, "missionarySettlement.cancel",
                 toList(map(getGame().getLiveEuropeanPlayers(player), p ->
                         new ChoiceItem<>(Messages.message(p.getCountryLabel()), p))));
-            if (enemy == null) return true;
+            if (enemy == null) {
+				return true;
+			}
             askServer().incite(unit, settlement, enemy, -1);
             break;
         default:
@@ -2111,12 +2213,16 @@ public final class InGameController extends FreeColClientHolder {
             // If the un/load consumed the moves, break now before
             // updating the stop.  This allows next turn to retry
             // un/loading, but this time it will not consume the moves.
-            if (unit.getMovesLeft() <= 0) break;
+            if (unit.getMovesLeft() <= 0) {
+				break;
+			}
 
             // Find the next stop with work to do.
             TradeRouteStop next = null;
             List<TradeRouteStop> moreStops = unit.getCurrentStops();
-            if (unit.atStop(moreStops.get(0))) moreStops.remove(0);
+            if (unit.atStop(moreStops.get(0))) {
+				moreStops.remove(0);
+			}
             for (TradeRouteStop trs : moreStops) {
                 if (trs.hasWork(unit, (!checkProduction) ? 0
                                 : unit.getTurnsToReach(trs.getLocation()))) {
@@ -2189,7 +2295,9 @@ public final class InGameController extends FreeColClientHolder {
             .getBoolean(GameOptions.ENHANCED_TRADE_ROUTES);
         final TradeRoute tradeRoute = unit.getTradeRoute();
         final TradeLocation trl = unit.getTradeLocation();
-        if (trl == null) return false;
+        if (trl == null) {
+			return false;
+		}
 
         final TradeRouteStop stop = unit.getStop();
         boolean ret = false;
@@ -2313,7 +2421,9 @@ public final class InGameController extends FreeColClientHolder {
             }
 
             // Do not load this goods type
-            if (ag.getAmount() <= 0) iterator.remove();
+            if (ag.getAmount() <= 0) {
+				iterator.remove();
+			}
 
             logger.log(Level.FINEST, "Load " + tradeRoute.getName()
                 + " with " + unit.getId() + " at " + stop.getLocation()
@@ -2408,7 +2518,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     private boolean unloadUnitAtStop(Unit unit, LogBuilder lb) {
         final TradeLocation trl = unit.getTradeLocation();
-        if (trl == null) return false;
+        if (trl == null) {
+			return false;
+		}
 
         final TradeRouteStop stop = unit.getStop();
         final List<GoodsType> goodsTypesToLoad = stop.getCargo();
@@ -2421,7 +2533,9 @@ public final class InGameController extends FreeColClientHolder {
         Game game = getGame();
         for (Goods goods : unit.getCompactGoodsList()) {
             GoodsType type = goods.getType();
-            if (goodsTypesToLoad.contains(type)) continue; // Keep this cargo.
+            if (goodsTypesToLoad.contains(type)) {
+				continue;
+			} // Keep this cargo.
             int present = goods.getAmount();
             if (present <= 0) {
                 logger.warning("Unexpected empty goods unload " + goods);
@@ -2445,7 +2559,9 @@ public final class InGameController extends FreeColClientHolder {
                         .addNamed("%goods%", goods);
                     if (!getGUI().confirm(unit.getTile(), template,
                                      unit, "yes", "no")) {
-                        if (atStop == 0) continue;
+                        if (atStop == 0) {
+							continue;
+						}
                         amount = atStop;
                     }
                     break;
@@ -2588,8 +2704,9 @@ public final class InGameController extends FreeColClientHolder {
     public boolean abandonColony(Colony colony) {
         final Player player = getMyPlayer();
         if (!requireOurTurn() || colony == null
-            || !player.owns(colony) || colony.getUnitCount() > 0)
-            return false;
+            || !player.owns(colony) || colony.getUnitCount() > 0) {
+			return false;
+		}
 
         // Proceed to abandon
         final Tile tile = colony.getTile();
@@ -2672,8 +2789,9 @@ public final class InGameController extends FreeColClientHolder {
             || !student.canBeStudent(teacher)
             || teacher.getColony() == null
             || student.getColony() != teacher.getColony()
-            || !teacher.getColony().canTrain(teacher))
-            return false;
+            || !teacher.getColony().canTrain(teacher)) {
+			return false;
+		}
 
         UnitWas unitWas = new UnitWas(student);
         boolean ret = askServer().assignTeacher(student, teacher)
@@ -2696,7 +2814,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the route was successfully assigned.
      */
     public boolean assignTradeRoute(Unit unit, TradeRoute tradeRoute) {
-        if (unit == null) return false;
+        if (unit == null) {
+			return false;
+		}
 
         UnitWas unitWas = new UnitWas(unit);
         boolean ret = askAssignTradeRoute(unit, tradeRoute);
@@ -2720,7 +2840,9 @@ public final class InGameController extends FreeColClientHolder {
     public boolean boardShip(Unit unit, Unit carrier) {
         if (!requireOurTurn() || unit == null || unit.isCarrier()
             || carrier == null || !carrier.canCarryUnits()
-            || !unit.isAtLocation(carrier.getLocation())) return false;
+            || !unit.isAtLocation(carrier.getLocation())) {
+			return false;
+		}
 
         boolean ret = askEmbark(unit, carrier);
         if (ret) {
@@ -2738,12 +2860,18 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if a colony was built.
      */
     public boolean buildColony(Unit unit) {
-        if (!requireOurTurn() || unit == null) return false;
+        if (!requireOurTurn() || unit == null) {
+			return false;
+		}
 
         // Check unit, which must be on the map and able to build.
-        if (unit == null) return false;
+        if (unit == null) {
+			return false;
+		}
         final Tile tile = unit.getTile();
-        if (tile == null) return false;
+        if (tile == null) {
+			return false;
+		}
         if (!unit.canBuildColony()) {
             getGUI().showInformationMessage(unit, StringTemplate
                 .template("buildColony.badUnit")
@@ -2752,7 +2880,9 @@ public final class InGameController extends FreeColClientHolder {
         }
 
         // Join existing colony if present
-        if (joinColony(unit) || tile.getColony() != null) return false;
+        if (joinColony(unit) || tile.getColony() != null) {
+			return false;
+		}
 
         // Check for other impediments.
         final Player player = getMyPlayer();
@@ -2778,7 +2908,9 @@ public final class InGameController extends FreeColClientHolder {
 
         // Get and check the name.
         String name = getGUI().getNewColonyName(player, tile);
-        if (name == null) return false;
+        if (name == null) {
+			return false;
+		}
 
         // Claim tile from other owners before founding a settlement.
         // Only native owners that we can steal, buy from, or use a
@@ -2787,7 +2919,9 @@ public final class InGameController extends FreeColClientHolder {
         boolean ret = player.owns(tile);
         if (!ret) {
             ret = askClaimTile(player, tile, unit, player.getLandPrice(tile));
-            if (!ret) NameCache.putSettlementName(player, name);
+            if (!ret) {
+				NameCache.putSettlementName(player, name);
+			}
         }            
         if (ret) {
             ret = askServer().buildColony(name, unit)
@@ -2821,7 +2955,9 @@ public final class InGameController extends FreeColClientHolder {
         if (!requireOurTurn() || type == null || amount <= 0
             || carrier == null
             || !carrier.isInEurope()
-            || !getMyPlayer().owns(carrier)) return false;
+            || !getMyPlayer().owns(carrier)) {
+			return false;
+		}
 
         final Europe europe = carrier.getOwner().getEurope();
         EuropeWas europeWas = new EuropeWas(europe);
@@ -2859,9 +2995,15 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the state was changed.
      */
     public boolean changeState(Unit unit, UnitState state) {
-        if (!requireOurTurn() || unit == null) return false;
-        if (unit.getState() == state) return true;
-        if (!unit.checkSetState(state)) return false;
+        if (!requireOurTurn() || unit == null) {
+			return false;
+		}
+        if (unit.getState() == state) {
+			return true;
+		}
+        if (!unit.checkSetState(state)) {
+			return false;
+		}
 
         // Check if this is a hostile fortification, and give the player
         // a chance to confirm.
@@ -2873,8 +3015,9 @@ public final class InGameController extends FreeColClientHolder {
                 Player enemy = tile.getOwningSettlement().getOwner();
                 if (player != enemy
                     && player.getStance(enemy) != Stance.ALLIANCE
-                    && !getGUI().confirmHostileAction(unit, tile))
-                    return false; // Aborted
+                    && !getGUI().confirmHostileAction(unit, tile)) {
+					return false;
+				} // Aborted
             }
         }
 
@@ -2902,7 +3045,9 @@ public final class InGameController extends FreeColClientHolder {
         if (!requireOurTurn() || unit == null || improvementType == null
             || !unit.hasTile()
             || !unit.checkSetState(UnitState.IMPROVING)
-            || improvementType.isNatural()) return false;
+            || improvementType.isNatural()) {
+			return false;
+		}
 
         // May need to claim the tile first
         final Player player = getMyPlayer();
@@ -2933,7 +3078,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the work type was changed.
      */
     public boolean changeWorkType(Unit unit, GoodsType workType) {
-        if (!requireOurTurn() || unit == null) return false;
+        if (!requireOurTurn() || unit == null) {
+			return false;
+		}
 
         UnitWas unitWas = new UnitWas(unit);
         boolean ret = askServer().changeWorkType(unit, workType)
@@ -2956,8 +3103,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean checkCashInTreasureTrain(Unit unit) {
         if (!requireOurTurn() || unit == null
-            || !unit.canCarryTreasure() || !unit.canCashInTreasureTrain())
-            return false; // Fail quickly if just not a candidate.
+            || !unit.canCarryTreasure() || !unit.canCashInTreasureTrain()) {
+			return false;
+		} // Fail quickly if just not a candidate.
 
         final Tile tile = unit.getTile();
         final Europe europe = unit.getOwner().getEurope();
@@ -2975,7 +3123,9 @@ public final class InGameController extends FreeColClientHolder {
                     .addAmount("%fee%", percent);
             }
             if (!getGUI().confirm(unit.getTile(), template, unit,
-                             "accept", "reject")) return false;
+                             "accept", "reject")) {
+				return false;
+			}
         }
 
         UnitWas unitWas = new UnitWas(unit);
@@ -3000,7 +3150,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean chooseFoundingFather(List<FoundingFather> ffs,
                                         FoundingFather ff) {
-        if (ffs == null) return false;
+        if (ffs == null) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
         player.setCurrentFather(ff);
@@ -3015,7 +3167,9 @@ public final class InGameController extends FreeColClientHolder {
      * @param ffs A list of <code>FoundingFather</code>s to choose from.
      */
     public void chooseFoundingFather(List<FoundingFather> ffs) {
-        if (ffs == null) return;
+        if (ffs == null) {
+			return;
+		}
         getGUI().showChooseFoundingFatherDialog(ffs,
             (FoundingFather ff) -> chooseFoundingFather(ffs, ff));
     }
@@ -3031,7 +3185,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean claimTile(Tile tile, FreeColGameObject claimant) {
         if (!requireOurTurn() || tile == null
-            || claimant == null) return false;
+            || claimant == null) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
         final int price = ((claimant instanceof Settlement)
@@ -3043,7 +3199,9 @@ public final class InGameController extends FreeColClientHolder {
             ? new UnitWas((Unit)claimant) : null;
         boolean ret = askClaimTile(player, tile, claimant, price);
         if (ret) {
-            if (unitWas != null) unitWas.fireChanges();
+            if (unitWas != null) {
+				unitWas.fireChanges();
+			}
             updateGUI(null);
         }
         return ret;
@@ -3059,7 +3217,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the unit has no destination.
      */
     public boolean clearGotoOrders(Unit unit) {
-        if (!requireOurTurn() || unit == null) return false;
+        if (!requireOurTurn() || unit == null) {
+			return false;
+		}
 
         UnitWas unitWas = new UnitWas(unit);
         boolean ret = askClearGotoOrders(unit);
@@ -3080,7 +3240,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return boolean <b>true</b> if the orders were cleared
      */
     public boolean clearOrders(Unit unit) {
-        if (!requireOurTurn() || unit == null) return false;
+        if (!requireOurTurn() || unit == null) {
+			return false;
+		}
 
         if (unit.getState() == UnitState.IMPROVING
             && !getGUI().confirm(unit.getTile(), StringTemplate
@@ -3110,7 +3272,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the speciality was cleared.
      */
     public boolean clearSpeciality(Unit unit) {
-        if (!requireOurTurn() || unit == null) return false;
+        if (!requireOurTurn() || unit == null) {
+			return false;
+		}
 
         UnitType oldType = unit.getType();
         UnitType newType = oldType.getTargetType(ChangeType.CLEAR_SKILL,
@@ -3163,7 +3327,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if independence was declared.
      */
     public boolean declareIndependence() {
-        if (!requireOurTurn()) return false;
+        if (!requireOurTurn()) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
         if (player.getNewLandName() == null) {
@@ -3241,7 +3407,9 @@ public final class InGameController extends FreeColClientHolder {
                 player.removeUnit(u);//-vis(player)
                 visibilityChange = true;
             }
-            if (visibilityChange) player.invalidateCanSeeTiles();//+vis(player)
+            if (visibilityChange) {
+				player.invalidateCanSeeTiles();
+			}//+vis(player)
             ModelMessage mm
                 = new ModelMessage(ModelMessage.MessageType.FOREIGN_DIPLOMACY,
                                    "diplomacy.offerAccepted", otherPlayer)
@@ -3280,14 +3448,19 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the unit was disbanded.
      */
     public boolean disbandUnit(Unit unit) {
-        if (!requireOurTurn() || unit == null) return false;
+        if (!requireOurTurn() || unit == null) {
+			return false;
+		}
 
         if (unit.getColony() != null
-            && !getGUI().confirmLeaveColony(unit)) return false;
+            && !getGUI().confirmLeaveColony(unit)) {
+			return false;
+		}
         final Tile tile = (getGUI().isShowingSubPanel()) ? null : unit.getTile();
         if (!getGUI().confirm(tile, StringTemplate.key("disbandUnit.text"),
-                         unit, "disbandUnit.yes", "cancel"))
-            return false;
+                         unit, "disbandUnit.yes", "cancel")) {
+			return false;
+		}
 
         // Try to disband
         boolean ret = askServer().disbandUnit(unit) && unit.isDisposed();
@@ -3350,7 +3523,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public void emigrate(Player player, int slot, int n, boolean foY) {
         if (player == null || !player.isColonial()
-            || !MigrationType.validMigrantSlot(slot)) return;
+            || !MigrationType.validMigrantSlot(slot)) {
+			return;
+		}
 
         if (askEmigrate(player.getEurope(), slot) != null) {
             emigration(player, n, foY);
@@ -3366,7 +3541,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the turn was ended.
      */
     public boolean endTurn(boolean showDialog) {
-        if (!requireOurTurn()) return false;
+        if (!requireOurTurn()) {
+			return false;
+		}
 
         return doEndTurn(showDialog
             && getClientOptions().getBoolean(ClientOptions.SHOW_END_TURN_DIALOG));
@@ -3384,9 +3561,13 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean equipUnitForRole(Unit unit, Role role, int roleCount) {
         if (!requireOurTurn() || unit == null || role == null || 0 > roleCount
-            || roleCount > role.getMaximumCount()) return false;
+            || roleCount > role.getMaximumCount()) {
+			return false;
+		}
         if (role == unit.getRole()
-            && roleCount == unit.getRoleCount()) return true;
+            && roleCount == unit.getRoleCount()) {
+			return true;
+		}
 
         final Player player = getMyPlayer();
         final Colony colony = unit.getColony();
@@ -3406,7 +3587,9 @@ public final class InGameController extends FreeColClientHolder {
                 }
             }
             price = player.getEurope().priceGoods(req);
-            if (price < 0 || !player.checkGold(price)) return false;
+            if (price < 0 || !player.checkGold(price)) {
+				return false;
+			}
         } else if (colony != null) {
             for (AbstractGoods ag : req) {
                 if (colony.getGoodsCount(ag.getType()) < ag.getAmount()) {
@@ -3428,9 +3611,15 @@ public final class InGameController extends FreeColClientHolder {
         boolean ret = askServer().equipUnitForRole(unit, role, roleCount)
             && unit.getRole() == role;
         if (ret) {
-            if (colonyWas != null) colonyWas.fireChanges();
-            if (europeWas != null) europeWas.fireChanges();
-            if (marketWas != null) marketWas.fireChanges(req);
+            if (colonyWas != null) {
+				colonyWas.fireChanges();
+			}
+            if (europeWas != null) {
+				europeWas.fireChanges();
+			}
+            if (marketWas != null) {
+				marketWas.fireChanges(req);
+			}
             unitWas.fireChanges();
             updateGUI(null);
         }
@@ -3460,7 +3649,9 @@ public final class InGameController extends FreeColClientHolder {
      *     reached their destination and are free to move again.
      */
     public boolean executeGotoOrders() {
-        if (!requireOurTurn()) return false;
+        if (!requireOurTurn()) {
+			return false;
+		}
 
         return doExecuteGotoOrders();
     }
@@ -3480,7 +3671,9 @@ public final class InGameController extends FreeColClientHolder {
     public boolean firstContact(Player player, Player other, Tile tile,
                                 boolean result) {
         if (player == null || player == null || player == other
-            || tile == null) return false;
+            || tile == null) {
+			return false;
+		}
 
         boolean ret = askServer().firstContact(player, other, tile, result);
         if (ret) {
@@ -3533,11 +3726,15 @@ public final class InGameController extends FreeColClientHolder {
      * @return A summary of that nation, or null on error.
      */
     public NationSummary getNationSummary(Player player) {
-        if (player == null) return null;
+        if (player == null) {
+			return null;
+		}
 
         final Player myPlayer = getMyPlayer();
         NationSummary ns = myPlayer.getNationSummary(player);
-        if (ns != null) return ns;
+        if (ns != null) {
+			return ns;
+		}
         // Refresh from server
         if (askServer().nationSummary(myPlayer, player)) {
             return myPlayer.getNationSummary(player);
@@ -3556,9 +3753,13 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean goToTile(Unit unit, Tile tile) {
         if (!requireOurTurn() || unit == null
-            || !getMyPlayer().owns(unit)) return false;
+            || !getMyPlayer().owns(unit)) {
+			return false;
+		}
 
-        if (!getGUI().confirmClearTradeRoute(unit)) return false;
+        if (!getGUI().confirmClearTradeRoute(unit)) {
+			return false;
+		}
 
         UnitWas unitWas = new UnitWas(unit);
         boolean ret = askSetDestination(unit, tile);
@@ -3583,7 +3784,9 @@ public final class InGameController extends FreeColClientHolder {
     public boolean ignoreMessage(ModelMessage message, boolean flag) {
         String key;
         if (message == null
-            || (key = message.getIgnoredMessageKey()) == null) return false;
+            || (key = message.getIgnoredMessageKey()) == null) {
+			return false;
+		}
 
         if (flag) {
             final Turn turn = getGame().getTurn();
@@ -3638,7 +3841,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean indianDemand(Unit unit, Colony colony,
                                 GoodsType type, int amount) {
-        if (unit == null || colony == null) return false;
+        if (unit == null || colony == null) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
         final int opt = getClientOptions()
@@ -3774,7 +3979,9 @@ public final class InGameController extends FreeColClientHolder {
     public boolean leaveShip(Unit unit) {
         Unit carrier;
         if (!requireOurTurn() || unit == null
-            || (carrier = unit.getCarrier()) == null) return false;
+            || (carrier = unit.getCarrier()) == null) {
+			return false;
+		}
 
         // Proceed to disembark
         UnitWas unitWas = new UnitWas(unit);
@@ -3800,7 +4007,9 @@ public final class InGameController extends FreeColClientHolder {
     public boolean loadCargo(Goods goods, Unit carrier) {
         if (!requireOurTurn() || goods == null || goods.getAmount() <= 0
             || goods.getLocation() == null
-            || carrier == null || !carrier.isCarrier()) return false;
+            || carrier == null || !carrier.isCarrier()) {
+			return false;
+		}
 
         if (goods.getLocation() instanceof Europe) {
             return buyGoods(goods.getType(), goods.getAmount(), carrier);
@@ -3813,7 +4022,9 @@ public final class InGameController extends FreeColClientHolder {
             sourceWas = new UnitWas(source);
         } else {
             Colony colony = carrier.getColony();
-            if (colony == null) return false;
+            if (colony == null) {
+				return false;
+			}
             colonyWas = new ColonyWas(colony);
         }
 
@@ -3821,8 +4032,12 @@ public final class InGameController extends FreeColClientHolder {
                                    goods.getAmount(), carrier);
         if (ret) {
             sound("sound.event.loadCargo");
-            if (colonyWas != null) colonyWas.fireChanges();
-            if (sourceWas != null) sourceWas.fireChanges();
+            if (colonyWas != null) {
+				colonyWas.fireChanges();
+			}
+            if (sourceWas != null) {
+				sourceWas.fireChanges();
+			}
             carrierWas.fireChanges();
             updateGUI(null);
         }
@@ -3839,9 +4054,13 @@ public final class InGameController extends FreeColClientHolder {
      */
     public void loadGame() {
         File file = getGUI().showLoadSaveFileDialog();
-        if (file == null) return;
+        if (file == null) {
+			return;
+		}
         if (getFreeColClient().isInGame()
-            && !getGUI().confirmStopGame()) return;
+            && !getGUI().confirmStopGame()) {
+			return;
+		}
 
         getConnectController().quitGame(true);
         turnReportMessages.clear();
@@ -3863,7 +4082,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean lootCargo(Unit unit, List<Goods> goods, String defenderId) {
         if (unit == null || goods == null || goods.isEmpty()
-            || defenderId == null) return false;
+            || defenderId == null) {
+			return false;
+		}
 
         UnitWas unitWas = new UnitWas(unit);
         boolean ret = askServer().loot(unit, defenderId, goods);
@@ -3898,7 +4119,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the monarch was answered.
      */
     public boolean monarchAction(MonarchAction action, boolean accept) {
-        if (action == null) return false;
+        if (action == null) {
+			return false;
+		}
 
         boolean ret = false;
         switch (action) {
@@ -3942,7 +4165,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean moveTo(Unit unit, Location destination) {
         if (!requireOurTurn() || unit == null
-            || destination == null) return false;
+            || destination == null) {
+			return false;
+		}
 
         // Sanity check current state.
         if (destination instanceof Europe) {
@@ -3972,7 +4197,9 @@ public final class InGameController extends FreeColClientHolder {
                 if (!u.isNaval()
                     && u.getState() == UnitState.SENTRY
                     && unit.canAdd(u)) {
-                    if (askEmbark(u, unit)) update = true;
+                    if (askEmbark(u, unit)) {
+						update = true;
+					}
                 }
             }
         }
@@ -3983,7 +4210,9 @@ public final class InGameController extends FreeColClientHolder {
             unitWas.fireChanges();
             update = true;
         }
-        if (update) updateGUI(null);
+        if (update) {
+			updateGUI(null);
+		}
         return ret;
     }
 
@@ -4000,9 +4229,13 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean moveUnit(Unit unit, Direction direction) {
         if (!requireOurTurn() || unit == null
-            || direction == null || !unit.hasTile()) return false;
+            || direction == null || !unit.hasTile()) {
+			return false;
+		}
 
-        if (!askClearGotoOrders(unit)) return false;
+        if (!askClearGotoOrders(unit)) {
+			return false;
+		}
 
         final int unitCount = unit.getUnitCount(),
             goodsCount = unit.getGoodsList().size();
@@ -4015,12 +4248,16 @@ public final class InGameController extends FreeColClientHolder {
         boolean ret = unit.getTile() != oldTile
             || unitWas.fireChanges();
         if (ret) {
-            if (colonyWas != null) colonyWas.fireChanges();
+            if (colonyWas != null) {
+				colonyWas.fireChanges();
+			}
             updateGUI(null);
             if (!unit.couldMove() && unit.hasTile()) {
                 // Show colony panel if unit out of moves
                 Colony colony = unit.getTile().getColony();
-                if (colony != null) colonyPanel(colony, unit);
+                if (colony != null) {
+					colonyPanel(colony, unit);
+				}
             }
         }
         return ret;
@@ -4035,13 +4272,19 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the tile cursor is moved.
      */
     public boolean moveTileCursor(Direction direction) {
-        if (direction == null) return false;
+        if (direction == null) {
+			return false;
+		}
 
         final Tile tile = getGUI().getSelectedTile();
-        if (tile == null) return false;
+        if (tile == null) {
+			return false;
+		}
 
         final Tile newTile = tile.getNeighbourOrNull(direction);
-        if (newTile == null) return false;
+        if (newTile == null) {
+			return false;
+		}
 
         getGUI().setSelectedTile(newTile);
         return true;
@@ -4057,10 +4300,14 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the new land was named.
      */
     public boolean nameNewLand(Unit unit, String name) {
-        if (unit == null || name == null) return false;
+        if (unit == null || name == null) {
+			return false;
+		}
 
         // Respond to the server.
-        if (!askServer().newLandName(unit, name)) return false;
+        if (!askServer().newLandName(unit, name)) {
+			return false;
+		}
 
         // The name is set, bring up the first landing panel.
         final Player player = unit.getOwner();
@@ -4096,7 +4343,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean nameNewRegion(final Tile tile, final Unit unit,
                                  final Region region, final String name) {
-        if (tile == null || unit == null || region == null) return false;
+        if (tile == null || unit == null || region == null) {
+			return false;
+		}
 
         return askServer().newRegionName(region, tile, unit, name);
     }
@@ -4158,7 +4407,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return A new <code>TradeRoute</code>.
      */
     public TradeRoute newTradeRoute(Player player) {
-        if (player == null) return null;
+        if (player == null) {
+			return null;
+		}
 
         final int n = player.getTradeRouteCount();
         return (askServer().newTradeRoute(getGame())
@@ -4188,7 +4439,9 @@ public final class InGameController extends FreeColClientHolder {
         logger.info("New turn: " + newTurn + "/" + turn);
 
         final boolean alert = getClientOptions().getBoolean(ClientOptions.AUDIO_ALERTS);
-        if (alert) sound("sound.event.alertSound");
+        if (alert) {
+			sound("sound.event.alertSound");
+		}
 
         final Turn currTurn = game.getTurn();
         if (currTurn.isFirstSeasonTurn()) {
@@ -4209,7 +4462,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True unless it was not our turn.
      */
     public boolean nextActiveUnit() {
-        if (!requireOurTurn()) return false;
+        if (!requireOurTurn()) {
+			return false;
+		}
 
         updateGUI(null);
         return true;
@@ -4238,11 +4493,15 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the arrears were paid.
      */
     public boolean payArrears(GoodsType type) {
-        if (!requireOurTurn() || type == null) return false;
+        if (!requireOurTurn() || type == null) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
         int arrears = player.getArrears(type);
-        if (arrears <= 0) return false;
+        if (arrears <= 0) {
+			return false;
+		}
         if (!player.checkGold(arrears)) {
             getGUI().showInformationMessage(StringTemplate
                 .template("payArrears.noGold")
@@ -4252,7 +4511,9 @@ public final class InGameController extends FreeColClientHolder {
 
         StringTemplate t = StringTemplate.template("payArrears.text")
             .addAmount("%amount%", arrears);
-        if (!getGUI().confirm(null, t, type, "ok", "cancel")) return false;
+        if (!getGUI().confirm(null, t, type, "ok", "cancel")) {
+			return false;
+		}
 
         boolean ret = askServer().payArrears(getGame(), type)
             && player.canTrade(type);
@@ -4273,7 +4534,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the building was bought.
      */
     public boolean payForBuilding(Colony colony) {
-        if (!requireOurTurn() || colony == null) return false;
+        if (!requireOurTurn() || colony == null) {
+			return false;
+		}
 
         if (!getSpecification().getBoolean(GameOptions.PAY_FOR_BUILDING)) {
             getGUI().showInformationMessage("payForBuilding.disabled");
@@ -4288,7 +4551,9 @@ public final class InGameController extends FreeColClientHolder {
         final int price = colony.getPriceForBuilding();
         StringTemplate t = StringTemplate.template("payForBuilding.text")
             .addAmount("%amount%", price);
-        if (!getGUI().confirm(null, t, colony, "yes", "no")) return false;
+        if (!getGUI().confirm(null, t, colony, "yes", "no")) {
+			return false;
+		}
 
         ColonyWas colonyWas = new ColonyWas(colony);
         boolean ret = askServer().payForBuilding(colony)
@@ -4311,9 +4576,13 @@ public final class InGameController extends FreeColClientHolder {
     public boolean putOutsideColony(Unit unit) {
         Colony colony;
         if (!requireOurTurn() || unit == null
-            || (colony = unit.getColony()) == null) return false;
+            || (colony = unit.getColony()) == null) {
+			return false;
+		}
 
-        if (!getGUI().confirmLeaveColony(unit)) return false;
+        if (!getGUI().confirmLeaveColony(unit)) {
+			return false;
+		}
 
         ColonyWas colonyWas = new ColonyWas(colony);
         UnitWas unitWas = new UnitWas(unit);
@@ -4354,10 +4623,14 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean recruitUnitInEurope(int index) {
         if (!requireOurTurn()
-            || !MigrationType.validMigrantIndex(index)) return false;
+            || !MigrationType.validMigrantIndex(index)) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
-        if (!player.isColonial()) return false;
+        if (!player.isColonial()) {
+			return false;
+		}
 
         if (!player.checkGold(player.getRecruitPrice())) {
             getGUI().showInformationMessage("info.notEnoughGold");
@@ -4387,7 +4660,9 @@ public final class InGameController extends FreeColClientHolder {
         final Player player = getMyPlayer();
         boolean visibilityChange = false;
         for (FreeColGameObject fcgo : objects) {
-            if (divert != null) player.divertModelMessages(fcgo, divert);
+            if (divert != null) {
+				player.divertModelMessages(fcgo, divert);
+			}
         
             if (fcgo instanceof Settlement) {
                 Settlement settlement = (Settlement)fcgo;
@@ -4399,7 +4674,9 @@ public final class InGameController extends FreeColClientHolder {
             } else if (fcgo instanceof Unit) {
                 // Deselect the object if it is the current active unit.
                 Unit u = (Unit)fcgo;
-                if (u == getGUI().getActiveUnit()) getGUI().setActiveUnit(null);
+                if (u == getGUI().getActiveUnit()) {
+					getGUI().setActiveUnit(null);
+				}
 
                 // Temporary hack until we have real containers.
                 if (u != null && u.getOwner() != null) {
@@ -4413,7 +4690,9 @@ public final class InGameController extends FreeColClientHolder {
             // updates should have done the rest.
             fcgo.disposeResources();
         }
-        if (visibilityChange) player.invalidateCanSeeTiles();//+vis(player)
+        if (visibilityChange) {
+			player.invalidateCanSeeTiles();
+		}//+vis(player)
 
         getGUI().refresh();
     }
@@ -4431,7 +4710,9 @@ public final class InGameController extends FreeColClientHolder {
     public boolean rename(Nameable object) {
         final Player player = getMyPlayer();
         if (!(object instanceof Ownable)
-            || !player.owns((Ownable)object)) return false;
+            || !player.owns((Ownable)object)) {
+			return false;
+		}
 
         String name = null;
         if (object instanceof Colony) {
@@ -4458,7 +4739,9 @@ public final class InGameController extends FreeColClientHolder {
             name = getGUI().getInput(unit.getTile(),
                                 StringTemplate.key("renameUnit.text"),
                                 unit.getName(), "rename", "cancel");
-            if (name == null) return false; // User cancelled
+            if (name == null) {
+				return false;
+			} // User cancelled
         } else {
             logger.warning("Tried to rename an unsupported Nameable: "
                 + object);
@@ -4481,14 +4764,20 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the game was saved.
      */
     public boolean saveGame() {
-        if (!getFreeColClient().canSaveCurrentGame()) return false;
+        if (!getFreeColClient().canSaveCurrentGame()) {
+			return false;
+		}
 
         final Game game = getGame();
-        if (game == null) return false; // Keyboard handling can race init
+        if (game == null) {
+			return false;
+		} // Keyboard handling can race init
         String fileName = getSaveGameString(game);
         File file = getGUI().showSaveDialog(FreeColDirectories.getSaveDirectory(),
                                        fileName);
-        if (file == null) return false;
+        if (file == null) {
+			return false;
+		}
         if (!getClientOptions().getBoolean(ClientOptions.CONFIRM_SAVE_OVERWRITE)
             || !file.exists()
             || getGUI().confirm("saveConfirmationDialog.areYouSure.text",
@@ -4549,11 +4838,17 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the destination change succeeds.
      */
     public boolean selectDestination(Unit unit) {
-        if (!requireOurTurn() || unit == null) return false;
+        if (!requireOurTurn() || unit == null) {
+			return false;
+		}
 
-        if (!getGUI().confirmClearTradeRoute(unit)) return false;
+        if (!getGUI().confirmClearTradeRoute(unit)) {
+			return false;
+		}
         Location destination = getGUI().showSelectDestinationDialog(unit);
-        if (destination == null) return false;
+        if (destination == null) {
+			return false;
+		}
 
         UnitWas unitWas = new UnitWas(unit);
         boolean ret = askSetDestination(unit, destination);
@@ -4589,7 +4884,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean sellGoods(Goods goods) {
         if (!requireOurTurn() || goods == null
-            || !(goods.getLocation() instanceof Unit)) return false;
+            || !(goods.getLocation() instanceof Unit)) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
         Unit carrier = (Unit)goods.getLocation();
@@ -4616,7 +4913,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the message was sent.
      */
     public boolean sendChat(String chat) {
-        if (chat == null) return false;
+        if (chat == null) {
+			return false;
+		}
 
         return askServer().chat(getMyPlayer(), chat);
     }
@@ -4633,7 +4932,9 @@ public final class InGameController extends FreeColClientHolder {
     public boolean setBuildQueue(Colony colony,
                                  List<BuildableType> buildQueue) {
         if (!requireOurTurn() || colony == null
-            || buildQueue == null) return false;
+            || buildQueue == null) {
+			return false;
+		}
 
         ColonyWas colonyWas = new ColonyWas(colony);
         boolean ret = askServer().setBuildQueue(colony, buildQueue);
@@ -4671,7 +4972,9 @@ public final class InGameController extends FreeColClientHolder {
 
             // Save the game (if it isn't newly loaded)
             if (getFreeColServer() != null
-                && game.getTurn().getNumber() > 0) autoSaveGame();
+                && game.getTurn().getNumber() > 0) {
+				autoSaveGame();
+			}
 
             // Get turn report out quickly before more message display occurs.
             player.removeDisplayedModelMessages();
@@ -4710,7 +5013,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the player is marked as dead.
      */
     public boolean setDead(Player dead) {
-        if (dead == null) return false;
+        if (dead == null) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
         if (player == dead) {
@@ -4728,7 +5033,9 @@ public final class InGameController extends FreeColClientHolder {
                 }
             } else {
                 if (!getGUI().confirm("defeated.text", "defeated.yes",
-                                 "quit")) getFreeColClient().quit();
+                                 "quit")) {
+					getFreeColClient().quit();
+				}
             }
         } else {
             player.setStance(dead, null);
@@ -4760,7 +5067,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the levels were set.
      */
     public boolean setGoodsLevels(Colony colony, GoodsType goodsType) {
-        if (colony == null || goodsType == null) return false;
+        if (colony == null || goodsType == null) {
+			return false;
+		}
 
         return askServer().setGoodsLevels(colony,
                                           colony.getExportData(goodsType));
@@ -4790,7 +5099,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the stance change succeeds.
      */
     public boolean setStance(Stance stance, Player first, Player second) {
-        if (stance == null || first == null || second == null) return false;
+        if (stance == null || first == null || second == null) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
         Stance old = first.getStance(second);
@@ -4826,7 +5137,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if a new unit was trained.
      */
     public boolean trainUnitInEurope(UnitType unitType) {
-        if (!requireOurTurn() || unitType == null) return false;
+        if (!requireOurTurn() || unitType == null) {
+			return false;
+		}
 
         final Player player = getMyPlayer();
         final Europe europe = player.getEurope();
@@ -4858,7 +5171,9 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean unload(Unit unit) {
         if (!requireOurTurn() || unit == null
-            || !unit.isCarrier()) return false;
+            || !unit.isCarrier()) {
+			return false;
+		}
 
         boolean ret = true;
         Colony colony = unit.getColony();
@@ -4906,13 +5221,17 @@ public final class InGameController extends FreeColClientHolder {
     public boolean unloadCargo(Goods goods, boolean dump) {
         if (!requireOurTurn() || goods == null
             || goods.getAmount() <= 0
-            || !(goods.getLocation() instanceof Unit)) return false;
+            || !(goods.getLocation() instanceof Unit)) {
+			return false;
+		}
 
         // Find the carrier
         final Unit carrier = (Unit)goods.getLocation();
 
         // Use Europe-specific routine if needed
-        if (carrier.isInEurope()) return sellGoods(goods);
+        if (carrier.isInEurope()) {
+			return sellGoods(goods);
+		}
 
         // Check for a colony
         final Colony colony = carrier.getColony();
@@ -4922,8 +5241,12 @@ public final class InGameController extends FreeColClientHolder {
         UnitWas unitWas = new UnitWas(carrier);
         boolean ret = askUnloadGoods(goods.getType(), goods.getAmount(), carrier);
         if (ret) {
-            if (!dump) sound("sound.event.unloadCargo");
-            if (colonyWas != null) colonyWas.fireChanges();
+            if (!dump) {
+				sound("sound.event.unloadCargo");
+			}
+            if (colonyWas != null) {
+				colonyWas.fireChanges();
+			}
             unitWas.fireChanges();
             updateGUI(null);
         }
@@ -4939,7 +5262,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True if the trade route was updated.
      */
     public boolean updateTradeRoute(TradeRoute route) {
-        if (route == null) return false;
+        if (route == null) {
+			return false;
+		}
 
         return askServer().updateTradeRoute(route);
     }
@@ -4981,7 +5306,9 @@ public final class InGameController extends FreeColClientHolder {
      * @return True, this can not fail.
      */
     public boolean waitUnit() {
-        if (!requireOurTurn()) return false;
+        if (!requireOurTurn()) {
+			return false;
+		}
 
         // Defeat the normal check for whether the current unit can move.
         getGUI().setActiveUnit(null);
@@ -5000,11 +5327,15 @@ public final class InGameController extends FreeColClientHolder {
      */
     public boolean work(Unit unit, WorkLocation workLocation) {
         if (!requireOurTurn() || unit == null
-            || workLocation == null) return false;
+            || workLocation == null) {
+			return false;
+		}
 
         StringTemplate template;
         if (unit.getStudent() != null
-            && !getGUI().confirmAbandonEducation(unit, false)) return false;
+            && !getGUI().confirmAbandonEducation(unit, false)) {
+			return false;
+		}
 
         Colony colony = workLocation.getColony();
         if (workLocation instanceof ColonyTile) {
@@ -5014,7 +5345,9 @@ public final class InGameController extends FreeColClientHolder {
                 return false;
             }
             if (!unit.getOwner().owns(tile)) {
-                if (!claimTile(tile, colony)) return false;
+                if (!claimTile(tile, colony)) {
+					return false;
+				}
             }
         }
 

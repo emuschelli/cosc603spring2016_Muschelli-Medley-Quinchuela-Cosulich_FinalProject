@@ -46,7 +46,7 @@ import net.sf.freecol.common.model.Specification;
 public class SelectOption extends IntegerOption {
 
     @SuppressWarnings("unused")
-    private static final Logger logger = Logger.getLogger(SelectOption.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(SelectOption.class.getName());
 
     /** Use localized labels? */
     protected boolean localizedLabels = false;
@@ -126,13 +126,13 @@ public class SelectOption extends IntegerOption {
 
         Integer fallback = null;
         for (Integer i : keys) {
-            if (i == value) { // Found a valid selection
+            if (i.equals(value)) { // Found a valid selection
                 super.setValue(value);
                 return;
             }
             if (fallback == null) fallback = i;
         }
-        logger.warning(getTagName() + ".setValue invalid value: "
+        LOGGER.warning(getTagName() + ".setValue invalid value: "
             + value + ", using fallback: " + fallback);
         super.setValue(fallback);
     }

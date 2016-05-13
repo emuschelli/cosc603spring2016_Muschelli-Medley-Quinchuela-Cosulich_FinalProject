@@ -66,7 +66,7 @@ import net.sf.freecol.server.model.ServerPlayer;
  */
 public class ServerColony extends Colony implements ServerModelObject {
 
-    private static final Logger logger = Logger.getLogger(ServerColony.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(ServerColony.class.getName());
 
 
     /**
@@ -246,7 +246,7 @@ public class ServerColony extends Colony implements ServerModelObject {
                 switch (queue.getCompletionAction()) {
                 case SHUFFLE:
                     if (queue.size() > 1) {
-                        randomShuffle(logger, "Build queue",
+                        randomShuffle(LOGGER, "Build queue",
                                       queue.getValues(), random);
                     }
                     break;
@@ -498,7 +498,7 @@ public class ServerColony extends Colony implements ServerModelObject {
 		    // Check for famine when total primary food goes negative.
 		    if (net + stored < 0) {
 		        if (getUnitCount() > 1) {
-		            Unit victim = getRandomMember(logger, "Starver",
+		            Unit victim = getRandomMember(LOGGER, "Starver",
 		                                          getUnitList(), random);
 		            cs.addRemove(See.only(owner), null,
 		                         victim);//-vis: safe, all within colony
@@ -614,7 +614,7 @@ public class ServerColony extends Colony implements ServerModelObject {
                               .addStringTemplate("%unit%", unit.getLabel()));
         }
 
-        logger.info("New unit in " + getName() + ": " + type.getSuffix());
+        LOGGER.info("New unit in " + getName() + ": " + type.getSuffix());
         return unit;
     }
 
@@ -682,7 +682,7 @@ public class ServerColony extends Colony implements ServerModelObject {
             if (owner.isAI()) {
                 firePropertyChange(REARRANGE_WORKERS, true, false);
             }
-            logger.info("New building in " + getName()
+            LOGGER.info("New building in " + getName()
                 + ": " + type.getSuffix());
         }
         return success;
@@ -735,7 +735,7 @@ public class ServerColony extends Colony implements ServerModelObject {
                         .addNamed("%building%", buildable));
                 break;
             default: // Are there other warnings to send?
-                logger.warning("Unexpected build failure at " + getName()
+                LOGGER.warning("Unexpected build failure at " + getName()
                     + " for " + buildable
                     + ": " + getNoBuildReason(buildable, null));
                 cs.addMessage(See.only(owner),
@@ -905,7 +905,7 @@ public class ServerColony extends Colony implements ServerModelObject {
                     .addStringTemplate("%nation%", nation)
                     .addName("%colony%", getName()));
             newOwner.invalidateCanSeeTiles();//+vis(other)
-            logger.fine("Convert at " + getName() + " for " + getName());
+            LOGGER.fine("Convert at " + getName() + " for " + getName());
         }
     }
 
