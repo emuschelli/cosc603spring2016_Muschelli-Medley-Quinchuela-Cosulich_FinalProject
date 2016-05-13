@@ -375,14 +375,18 @@ public class FreeColDirectories {
 
         File d = requireDir(new File(dirs[0], FREECOL_DIRECTORY));
         if (d == null) return -1;
-        dirs[0] = d;
-
-        d = requireDir(new File(dirs[1], FREECOL_DIRECTORY));
-        if (d == null) return -1;
+        d = d(dirs, d);
+		if (d == null) return -1;
         dirs[1] = d;
 
         return 0;
     }
+
+	private static File d(File[] dirs, File d) {
+		dirs[0] = d;
+		d = requireDir(new File(dirs[1], FREECOL_DIRECTORY));
+		return d;
+	}
 
 
     /**
@@ -797,12 +801,18 @@ public class FreeColDirectories {
             if (!file.exists() || !file.isFile() || !file.canRead()) return false;
         }
         savegameFile = file;
-        File parent = file.getParentFile();
-        if (parent == null) parent = new File(".");
-        saveDirectory = parent;
+        File parent = parent(file);
+		saveDirectory = parent;
         deriveAutosaveDirectory();
         return true;
     }
+
+	private static File parent(File file) {
+		File parent = file.getParentFile();
+		if (parent == null)
+			parent = new File(".");
+		return parent;
+	}
 
     /**
      * Gets the most recently saved game file, or <b>null</b>.  (This

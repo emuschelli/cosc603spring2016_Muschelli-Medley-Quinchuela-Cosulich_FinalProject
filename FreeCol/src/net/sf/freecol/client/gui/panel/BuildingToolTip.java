@@ -131,7 +131,61 @@ public class BuildingToolTip extends JToolTip {
 
         add(new JLabel(new ImageIcon(lib.getBuildingImage(building))));
 
-        for (Unit unit : building.getUnitList()) {
+        unitListForLoop(freeColClient, building, output);
+
+        int diff = building.getUnitCapacity() - building.getUnitCount();
+        for (int index = 0; index < diff; index++) {
+            add(new JLabel(new ImageIcon(
+                lib.getMiscImage("image.unit.placeholder"))), "span 2");
+        }
+
+        breedingNumber(building, output);
+
+        checkDebuggerMode(building, game, output);
+
+        setPreferredSize(layout.preferredLayoutSize(this));
+    }
+
+
+	private void checkDebuggerMode(Building building, final Game game, final GoodsType output) {
+		if (FreeColDebugger.isInDebugMode(FreeColDebugger.DebugMode.MENUS)) {
+            List<Modifier> modifiers = new ArrayList<>();
+            if (output != null) {
+                modifiers.addAll(building.getProductionModifiers(output, null));
+            }
+            Collections.sort(modifiers);
+            for (Modifier m : modifiers) {
+                JLabel[] mLabels = ModifierFormat.getModifierLabels(m, null,
+                        game.getTurn());
+                for (int i = 0; i < mLabels.length; i++) {
+                    if (mLabels[i] != null) {
+                        if (i == 0) {
+                            add(mLabels[i],"newline");
+                        } else {
+                            add(mLabels[i]);
+                        }
+                    }
+                }
+            }
+        }
+	}
+
+
+	private void breedingNumber(Building building, final GoodsType output) {
+		int breedingNumber = (output == null) ? GoodsType.INFINITY
+            : output.getBreedingNumber();
+        if (breedingNumber < GoodsType.INFINITY
+            && breedingNumber > building.getColony().getGoodsCount(output)) {
+            add(Utility.localizedLabel(StringTemplate
+                    .template("buildingToolTip.breeding")
+                    .addAmount("%number%", breedingNumber)
+                    .addNamed("%goods%", output)));
+        }
+	}
+
+
+	private void unitListForLoop(FreeColClient freeColClient, Building building, final GoodsType output) {
+		for (Unit unit : building.getUnitList()) {
             UnitLabel unitLabel = new UnitLabel(freeColClient, unit, false);
             int amount = building.getUnitProduction(unit, output);
             if (amount > 0) {
@@ -153,46 +207,7 @@ public class BuildingToolTip extends JToolTip {
                 add(unitLabel, "span 2");
             }
         }
-
-        int diff = building.getUnitCapacity() - building.getUnitCount();
-        for (int index = 0; index < diff; index++) {
-            add(new JLabel(new ImageIcon(
-                lib.getMiscImage("image.unit.placeholder"))), "span 2");
-        }
-
-        int breedingNumber = (output == null) ? GoodsType.INFINITY
-            : output.getBreedingNumber();
-        if (breedingNumber < GoodsType.INFINITY
-            && breedingNumber > building.getColony().getGoodsCount(output)) {
-            add(Utility.localizedLabel(StringTemplate
-                    .template("buildingToolTip.breeding")
-                    .addAmount("%number%", breedingNumber)
-                    .addNamed("%goods%", output)));
-        }
-
-        if (FreeColDebugger.isInDebugMode(FreeColDebugger.DebugMode.MENUS)) {
-            List<Modifier> modifiers = new ArrayList<>();
-            if (output != null) {
-                modifiers.addAll(building.getProductionModifiers(output, null));
-            }
-            Collections.sort(modifiers);
-            for (Modifier m : modifiers) {
-                JLabel[] mLabels = ModifierFormat.getModifierLabels(m, null,
-                        game.getTurn());
-                for (int i = 0; i < mLabels.length; i++) {
-                    if (mLabels[i] != null) {
-                        if (i == 0) {
-                            add(mLabels[i],"newline");
-                        } else {
-                            add(mLabels[i]);
-                        }
-                    }
-                }
-            }
-        }
-
-        setPreferredSize(layout.preferredLayoutSize(this));
-    }
+	}
 
 
     // Override Component

@@ -221,40 +221,48 @@ public final class Limit extends FreeColSpecObjectType {
      */
     public boolean evaluate(Settlement settlement) {
         final Specification spec = getSpecification();
-        Integer lhs = null;
-        switch (leftHandSide.getScopeLevel()) {
-        case SETTLEMENT:
-            lhs = leftHandSide.getValue(settlement);
-            break;
-        case PLAYER:
-            lhs = leftHandSide.getValue(settlement.getOwner());
-            break;
-        case GAME:
-            lhs = leftHandSide.getValue(settlement.getGame());
-            break;
-        default:
-            lhs = leftHandSide.getValue();
-            break;
-        }
-
-        Integer rhs = null;
-        switch (rightHandSide.getScopeLevel()) {
-        case SETTLEMENT:
-            rhs = rightHandSide.getValue(settlement);
-            break;
-        case PLAYER:
-            rhs = rightHandSide.getValue(settlement.getOwner());
-            break;
-        case GAME:
-            rhs = rightHandSide.getValue(settlement.getGame());
-            break;
-        default:
-            rhs = rightHandSide.getValue();
-            break;
-        }
-
-        return evaluate(lhs, rhs);
+        Integer lhs = lhs(settlement);
+		Integer rhs = rhs(settlement);
+		return evaluate(lhs, rhs);
     }
+
+	private Integer rhs(Settlement settlement) {
+		Integer rhs = null;
+		switch (rightHandSide.getScopeLevel()) {
+		case SETTLEMENT:
+			rhs = rightHandSide.getValue(settlement);
+			break;
+		case PLAYER:
+			rhs = rightHandSide.getValue(settlement.getOwner());
+			break;
+		case GAME:
+			rhs = rightHandSide.getValue(settlement.getGame());
+			break;
+		default:
+			rhs = rightHandSide.getValue();
+			break;
+		}
+		return rhs;
+	}
+
+	private Integer lhs(Settlement settlement) {
+		Integer lhs = null;
+		switch (leftHandSide.getScopeLevel()) {
+		case SETTLEMENT:
+			lhs = leftHandSide.getValue(settlement);
+			break;
+		case PLAYER:
+			lhs = leftHandSide.getValue(settlement.getOwner());
+			break;
+		case GAME:
+			lhs = leftHandSide.getValue(settlement.getGame());
+			break;
+		default:
+			lhs = leftHandSide.getValue();
+			break;
+		}
+		return lhs;
+	}
 
     /**
      * Check if at least one of the Operands has a given OperandType.

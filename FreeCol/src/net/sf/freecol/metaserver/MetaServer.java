@@ -73,24 +73,32 @@ public final class MetaServer extends Thread {
      * @param args The command-line options.
      */
     public static void main(String[] args) {
-        int port = -1;
-        try {
-            port = Integer.parseInt(args[0]);
-        } catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
-            System.out.println("Usage: java net.sf.freecol.metaserver.MetaServer PORT_NUMBER");
-            System.exit(-1);
-        }
-
-        MetaServer metaServer = null;
-        try {
-            metaServer = new MetaServer(port);
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not create MetaServer!", e);
-            System.exit(-1);
-        }
-
-        metaServer.start();
+        MetaServer metaServer = metaServer(args);
+		metaServer.start();
     }
+
+	private static MetaServer metaServer(String[] args) {
+		int port = port(args);
+		MetaServer metaServer = null;
+		try {
+			metaServer = new MetaServer(port);
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Could not create MetaServer!", e);
+			System.exit(-1);
+		}
+		return metaServer;
+	}
+
+	private static int port(String[] args) {
+		int port = -1;
+		try {
+			port = Integer.parseInt(args[0]);
+		} catch (ArrayIndexOutOfBoundsException | NumberFormatException e) {
+			System.out.println("Usage: java net.sf.freecol.metaserver.MetaServer PORT_NUMBER");
+			System.exit(-1);
+		}
+		return port;
+	}
 
     /**
      * Creates a new network server. Use {@link #run metaServer.start()} to
@@ -128,19 +136,30 @@ public final class MetaServer extends Thread {
     @Override
     public void run() {
         while (running) {
-            Socket clientSocket = null;
-            try {
-                clientSocket = serverSocket.accept();
-                logger.info("Client connection from: "
-                    + clientSocket.getInetAddress().toString());
-                Connection connection = new Connection(clientSocket,
-                    getNetworkHandler(), FreeCol.METASERVER_THREAD);
-                connections.put(clientSocket, connection);
-            } catch (IOException e) {
-                logger.log(Level.WARNING, "Meta-run", e);
-            }
+            connections();
         }
     }
+
+	private void connections() {
+		Socket clientSocket = clientSocket();
+		try {
+			logger.info("Client connection from: " + clientSocket.getInetAddress().toString());
+			Connection connection = new Connection(clientSocket, getNetworkHandler(), FreeCol.METASERVER_THREAD);
+			connections.put(clientSocket, connection);
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Meta-run", e);
+		}
+	}
+
+	private Socket clientSocket() {
+		Socket clientSocket = null;
+		try {
+			clientSocket = serverSocket.accept();
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Meta-run", e);
+		}
+		return clientSocket;
+	}
 
     /**
      * Gets the control object that handles the network requests.
@@ -176,16 +195,26 @@ public final class MetaServer extends Thread {
     public void shutdown() {
         running = false;
 
-        try {
-            serverSocket.close();
-        } catch (IOException e) {
-            logger.log(Level.WARNING, "Could not close the server socket!", e);
-        }
-
-        Connection c;
-        while ((c = connections.remove(0)) != null) c.close();
-        logger.info("Server shutdown.");
+        serverSocket();
+		Connection c = c();
+		logger.info("Server shutdown.");
     }
+
+	private void serverSocket() {
+		try {
+			serverSocket.close();
+		} catch (IOException e) {
+			logger.log(Level.WARNING, "Could not close the server socket!", e);
+		}
+	}
+
+	private Connection c() {
+		Connection c;
+		while ((c = connections.remove(0)) != null) {
+			c.close();
+		}
+		return c;
+	}
 
     /**
      * Gets a <code>Connection</code> identified by a <code>Socket</code>.

@@ -226,66 +226,11 @@ public class ServerUnit extends Unit implements ServerModelObject {
         boolean locDirty = false;
         boolean unitDirty = false;
 
-        // Attrition.  Do it first as the unit might die.
-        if (getType().hasMaximumAttrition() && loc instanceof Tile
-            && !((Tile)loc).hasSettlement()) {
-            int attrition = getAttrition() + 1;
-            setAttrition(attrition);
-            if (attrition > getType().getMaximumAttrition()) {
-                cs.addMessage(See.only(owner),
-                    new ModelMessage(ModelMessage.MessageType.UNIT_LOST,
-                                     "model.unit.attrition", this)
-                        .addStringTemplate("%unit%", getLabel())
-                        .addStringTemplate("%location%",
-                            loc.getLocationLabelFor(owner)));
-                cs.add(See.perhaps(), (Tile)loc);
-                cs.addRemove(See.perhaps().always(owner), loc, 
-                             this);//-vis(owner)
-                this.dispose();
-                owner.invalidateCanSeeTiles();//+vis(owner)
-                lb.add(", ");
-                return;
-            }
-        } else {
-            setAttrition(0);
-        }
+        attrition(lb, cs, owner, loc);
 
-        // Check for experience-promotion.
-        GoodsType produce;
-        UnitType learn;
-        if (isInColony()
-            && (produce = getWorkType()) != null
-            && (learn = spec.getExpertForProducing(produce)) != null
-            && learn != getType()
-            && getType().canBeUpgraded(learn, ChangeType.EXPERIENCE)) {
-            int maximumExperience = getType().getMaximumExperience();
-            int maxValue = (100 * maximumExperience) /
-                getType().getUnitTypeChange(learn).getProbability(ChangeType.EXPERIENCE);
-            if (maxValue > 0
-                && randomInt(logger, "Experience", random, maxValue)
-                < Math.min(getExperience(), maximumExperience)) {
-                StringTemplate oldName = getLabel();
-                changeType(learn);//-vis: safe within colony
-                cs.addMessage(See.only(owner),
-                    new ModelMessage(ModelMessage.MessageType.UNIT_IMPROVED,
-                                     "model.unit.experience", getColony(), this)
-                        .addStringTemplate("%oldName%", oldName)
-                        .addStringTemplate("%unit%", getLabel())
-                        .addName("%colony%", getColony().getName()));
-                lb.add(" experience upgrade to ", getType());
-                unitDirty = true;
-            }
-        }
+        unitDirty = checkExperience(random, lb, cs, owner, spec, unitDirty);
 
-        // Update moves left.
-        if (isInMission()) {
-            getTile().updateIndianSettlement(owner);
-            setMovesLeft(0);
-        } else if (isDamaged()) {
-            setMovesLeft(0);
-        } else {
-            setMovesLeft(getInitialMovesLeft());
-        }
+        updateMoves(owner);
 
         if (getWorkLeft() > 0) {
             unitDirty = true;
@@ -395,6 +340,75 @@ public class ServerUnit extends Unit implements ServerModelObject {
         }
         lb.add(", ");
     }
+
+	private void attrition(LogBuilder lb, ChangeSet cs, ServerPlayer owner, Location loc) {
+		// Attrition.  Do it first as the unit might die.
+        if (getType().hasMaximumAttrition() && loc instanceof Tile
+            && !((Tile)loc).hasSettlement()) {
+            int attrition = getAttrition() + 1;
+            setAttrition(attrition);
+            if (attrition > getType().getMaximumAttrition()) {
+                cs.addMessage(See.only(owner),
+                    new ModelMessage(ModelMessage.MessageType.UNIT_LOST,
+                                     "model.unit.attrition", this)
+                        .addStringTemplate("%unit%", getLabel())
+                        .addStringTemplate("%location%",
+                            loc.getLocationLabelFor(owner)));
+                cs.add(See.perhaps(), (Tile)loc);
+                cs.addRemove(See.perhaps().always(owner), loc, 
+                             this);//-vis(owner)
+                this.dispose();
+                owner.invalidateCanSeeTiles();//+vis(owner)
+                lb.add(", ");
+                return;
+            }
+        } else {
+            setAttrition(0);
+        }
+	}
+
+	private void updateMoves(ServerPlayer owner) {
+		// Update moves left.
+        if (isInMission()) {
+            getTile().updateIndianSettlement(owner);
+            setMovesLeft(0);
+        } else if (isDamaged()) {
+            setMovesLeft(0);
+        } else {
+            setMovesLeft(getInitialMovesLeft());
+        }
+	}
+
+	private boolean checkExperience(Random random, LogBuilder lb, ChangeSet cs, ServerPlayer owner, Specification spec,
+			boolean unitDirty) {
+		// Check for experience-promotion.
+        GoodsType produce;
+        UnitType learn;
+        if (isInColony()
+            && (produce = getWorkType()) != null
+            && (learn = spec.getExpertForProducing(produce)) != null
+            && learn != getType()
+            && getType().canBeUpgraded(learn, ChangeType.EXPERIENCE)) {
+            int maximumExperience = getType().getMaximumExperience();
+            int maxValue = (100 * maximumExperience) /
+                getType().getUnitTypeChange(learn).getProbability(ChangeType.EXPERIENCE);
+            if (maxValue > 0
+                && randomInt(logger, "Experience", random, maxValue)
+                < Math.min(getExperience(), maximumExperience)) {
+                StringTemplate oldName = getLabel();
+                changeType(learn);//-vis: safe within colony
+                cs.addMessage(See.only(owner),
+                    new ModelMessage(ModelMessage.MessageType.UNIT_IMPROVED,
+                                     "model.unit.experience", getColony(), this)
+                        .addStringTemplate("%oldName%", oldName)
+                        .addStringTemplate("%unit%", getLabel())
+                        .addName("%colony%", getColony().getName()));
+                lb.add(" experience upgrade to ", getType());
+                unitDirty = true;
+            }
+        }
+		return unitDirty;
+	}
 
     /**
      * Completes a tile improvement.
@@ -636,22 +650,7 @@ public class ServerUnit extends Unit implements ServerModelObject {
         if (rumour == null) {
             rumour = lostCity.chooseType(this, random);
         }
-        // Filter out failing cases that could only occur if the
-        // type was explicitly set in debug mode.
-        switch (rumour) {
-        case BURIAL_GROUND: case MOUNDS:
-            if (tile.getOwner() == null || !tile.getOwner().isIndian()) {
-                rumour = RumourType.NOTHING;
-            }
-            break;
-        case LEARN:
-            if (getType().getUnitTypesLearntInLostCity().isEmpty()) {
-                rumour = RumourType.NOTHING;
-            }
-            break;
-        default:
-            break;
-        }
+        rumour = filterFailingCase(tile, rumour);
 
         // Mounds are a special case that degrade to other cases.
         boolean mounds = rumour == RumourType.MOUNDS;
@@ -824,6 +823,26 @@ public class ServerUnit extends Unit implements ServerModelObject {
         return result;
     }
 
+	private RumourType filterFailingCase(Tile tile, RumourType rumour) {
+		// Filter out failing cases that could only occur if the
+        // type was explicitly set in debug mode.
+        switch (rumour) {
+        case BURIAL_GROUND: case MOUNDS:
+            if (tile.getOwner() == null || !tile.getOwner().isIndian()) {
+                rumour = RumourType.NOTHING;
+            }
+            break;
+        case LEARN:
+            if (getType().getUnitTypesLearntInLostCity().isEmpty()) {
+                rumour = RumourType.NOTHING;
+            }
+            break;
+        default:
+            break;
+        }
+		return rumour;
+	}
+
     /**
      * Activate sentried units on a tile.
      *
@@ -902,11 +921,7 @@ public class ServerUnit extends Unit implements ServerModelObject {
         }
         serverPlayer.invalidateCanSeeTiles();//+vis(serverPlayer)
 
-        // Update tiles that are now invisible.
-        Iterator<Tile> it = oldTiles.iterator();
-        while (it.hasNext()) {
-            if (serverPlayer.canSee(it.next())) it.remove();
-        }
+        updateInvisibleTiles(serverPlayer, oldTiles);
         if (!oldTiles.isEmpty()) cs.add(See.only(serverPlayer), oldTiles);
         // Unless moving in from off-map, update the old location and
         // make sure the move is always visible even if the unit
@@ -928,109 +943,11 @@ public class ServerUnit extends Unit implements ServerModelObject {
             Settlement settlement;
             Unit unit = null;
             int d;
-            // Claim land for tribe?
-            if ((newTile.getOwner() == null
-                    || (newTile.getOwner().isEuropean()
-                        && newTile.getOwningSettlement() == null))
-                && serverPlayer.isIndian()
-                && (settlement = getHomeIndianSettlement()) != null
-                && ((d = newTile.getDistanceTo(settlement.getTile()))
-                    < (settlement.getRadius()
-                        + settlement.getType().getExtraClaimableRadius()))
-                && randomInt(logger, "Claim tribal land", random, d + 1) == 0) {
-                newTile.cacheUnseen();//+til
-                newTile.changeOwnership(serverPlayer, settlement);//-til
-            }
+            settlement = claimLand(newTile, random, serverPlayer);
 
-            // Check for first landing
-            String newLand = null;
-            boolean firstLanding = !serverPlayer.isNewLandNamed();
-            if (serverPlayer.isEuropean() && firstLanding) {
-                newLand = serverPlayer.getNameForNewLand();
-                // Set the default value now to prevent multiple attempts.
-                // The user setNewLandName can override.
-                serverPlayer.setNewLandName(newLand);
-                cs.add(See.only(serverPlayer), ChangePriority.CHANGE_LATE,
-                    new NewLandNameMessage(this, newLand));
-                logger.finest("First landing for " + serverPlayer
-                    + " at " + newTile + " with " + this);
-            }
+            boolean firstLanding = checkFirstLanding(newTile, cs, serverPlayer);
 
-            // Check for new contacts.
-            List<ServerPlayer> pending = new ArrayList<>();
-            for (Tile t : newTile.getSurroundingTiles(1, 1)) {
-                if (t == null || !t.isLand()) {
-                    continue; // Invalid tile for contact
-                }
-
-                settlement = t.getSettlement();
-                ServerPlayer other = (settlement != null)
-                    ? (ServerPlayer)settlement.getOwner()
-                    : ((unit = t.getFirstUnit()) != null)
-                    ? (ServerPlayer)unit.getOwner()
-                    : null;
-                if (other == null
-                    || other == serverPlayer
-                    || pending.contains(other)) continue; // No contact
-                if (serverPlayer.csContact(other, cs)) {
-                    // First contact.  Note contact pending because
-                    // European first contact now requires a diplomacy
-                    // interaction to complete before leaving UNCONTACTED
-                    // state.
-                    pending.add(other);
-                    if (serverPlayer.isEuropean()) {
-                        if (other.isIndian()) {
-                            Tile offer = (firstLanding && other.owns(newTile))
-                                ? newTile
-                                : null;
-                            serverPlayer.csNativeFirstContact(other, offer, cs);
-                        } else {
-                            serverPlayer.csEuropeanFirstContact(this,
-                                settlement, unit, cs);
-                        }
-                    } else {
-                        if (other.isIndian()) {
-                            ; // Do nothing
-                        } else {
-                            other.csNativeFirstContact(serverPlayer, null, cs);
-                        }
-                    }
-                }
-
-                // Initialize alarm for native settlements or units and
-                // notify of contact.
-                ServerPlayer contactPlayer = serverPlayer;
-                IndianSettlement is = (settlement instanceof IndianSettlement)
-                    ? (IndianSettlement)settlement
-                    : null;
-                if (is != null
-                    || (unit != null
-                        && (is = unit.getHomeIndianSettlement()) != null)
-                    || (unit != null
-                        && (contactPlayer = (ServerPlayer)unit.getOwner())
-                            .isEuropean()
-                        && (is = getHomeIndianSettlement()) != null
-                        && is.getTile() != null)) {
-                    Tile copied = is.getTile().getTileToCache();
-                    if (contactPlayer.hasExplored(is.getTile())
-                        && is.setContacted(contactPlayer)) {//-til
-                        is.getTile().cacheUnseen(copied);//+til
-                        cs.add(See.only(contactPlayer), is);
-                        // First European contact with native settlement.
-                        StringTemplate nation = is.getOwner().getNationLabel();
-                        cs.addMessage(See.only(contactPlayer),
-                            new ModelMessage(ModelMessage.MessageType.FOREIGN_DIPLOMACY,
-                                             "model.unit.nativeSettlementContact",
-                                             this, is)
-                                .addStringTemplate("%nation%", nation)
-                                .addName("%settlement%", is.getName()));
-                        logger.finest("First contact between "
-                            + contactPlayer.getId()
-                            + " and " + is + " at " + newTile);
-                    }                   
-                }
-                csActivateSentries(t, cs);
-            }
+            checkNewContacts(newTile, cs, serverPlayer, settlement, unit, firstLanding);
         } else { // water
             for (Tile t : newTile.getSurroundingTiles(1, 1)) {
                 if (t == null || t.isLand() || t.getFirstUnit() == null) {
@@ -1041,7 +958,43 @@ public class ServerUnit extends Unit implements ServerModelObject {
             }
         }
 
-        // Disembark in colony.
+        disembarkInColony(newTile, random, cs);
+                
+        checkSlowingUnits(newTile, random, cs, serverPlayer);
+
+     // Check for region discovery
+        Region region = newTile.getDiscoverableRegion();
+        if (serverPlayer.isEuropean() && region != null
+            && region.getDiscoverer() == null) {
+            cs.add(See.only(serverPlayer), ChangePriority.CHANGE_LATE,
+                new NewRegionNameMessage(region, newTile, this,
+                    serverPlayer.getNameForRegion(region)));
+            region.setDiscoverer(getId());
+        }
+    }
+
+	private Settlement claimLand(Tile newTile, Random random, final ServerPlayer serverPlayer) {
+		Settlement settlement = null;
+		int d;
+		// Claim land for tribe?
+		if ((newTile.getOwner() == null
+		        || (newTile.getOwner().isEuropean()
+		            && newTile.getOwningSettlement() == null))
+		    && serverPlayer.isIndian()
+		    && (settlement = getHomeIndianSettlement()) != null
+		    && ((d = newTile.getDistanceTo(settlement.getTile()))
+		        < (settlement.getRadius()
+		            + settlement.getType().getExtraClaimableRadius()))
+		    && randomInt(logger, "Claim tribal land", random, d + 1) == 0) {
+		    newTile.cacheUnseen();//+til
+		    newTile.changeOwnership(serverPlayer, settlement);//-til
+		}
+		return settlement;
+	}
+
+
+	private void disembarkInColony(Tile newTile, Random random, ChangeSet cs) {
+		// Disembark in colony.
         if (isCarrier() && !isEmpty() && newTile.getColony() != null
             && getSpecification().getBoolean(GameOptions.DISEMBARK_IN_COLONY)) {
             for (Unit u : getUnitList()) {
@@ -1049,8 +1002,10 @@ public class ServerUnit extends Unit implements ServerModelObject {
             }
             setMovesLeft(0);
         }
-                
-        // Check for slowing units.
+	}
+
+	private void checkSlowingUnits(Tile newTile, Random random, ChangeSet cs, final ServerPlayer serverPlayer) {
+		// Check for slowing units.
         Unit slowedBy = getSlowedBy(newTile, random);
         if (slowedBy != null) {
             StringTemplate enemy = slowedBy.getApparentOwnerName();
@@ -1063,17 +1018,111 @@ public class ServerUnit extends Unit implements ServerModelObject {
                         slowedBy.getLabel(UnitLabelType.PLAIN))
                     .addStringTemplate("%enemyNation%", enemy));
         }
+	}
 
-        // Check for region discovery
-        Region region = newTile.getDiscoverableRegion();
-        if (serverPlayer.isEuropean() && region != null
-            && region.getDiscoverer() == null) {
-            cs.add(See.only(serverPlayer), ChangePriority.CHANGE_LATE,
-                new NewRegionNameMessage(region, newTile, this,
-                    serverPlayer.getNameForRegion(region)));
-            region.setDiscoverer(getId());
+	private boolean checkFirstLanding(Tile newTile, ChangeSet cs, final ServerPlayer serverPlayer) {
+		// Check for first landing
+		String newLand = null;
+		boolean firstLanding = !serverPlayer.isNewLandNamed();
+		if (serverPlayer.isEuropean() && firstLanding) {
+		    newLand = serverPlayer.getNameForNewLand();
+		    // Set the default value now to prevent multiple attempts.
+		    // The user setNewLandName can override.
+		    serverPlayer.setNewLandName(newLand);
+		    cs.add(See.only(serverPlayer), ChangePriority.CHANGE_LATE,
+		        new NewLandNameMessage(this, newLand));
+		    logger.finest("First landing for " + serverPlayer
+		        + " at " + newTile + " with " + this);
+		}
+		return firstLanding;
+	}
+
+	private void checkNewContacts(Tile newTile, ChangeSet cs, final ServerPlayer serverPlayer, Settlement settlement,
+			Unit unit, boolean firstLanding) {
+		// Check for new contacts.
+		List<ServerPlayer> pending = new ArrayList<>();
+		for (Tile t : newTile.getSurroundingTiles(1, 1)) {
+		    if (t == null || !t.isLand()) {
+		        continue; // Invalid tile for contact
+		    }
+
+		    settlement = t.getSettlement();
+		    ServerPlayer other = (settlement != null)
+		        ? (ServerPlayer)settlement.getOwner()
+		        : ((unit = t.getFirstUnit()) != null)
+		        ? (ServerPlayer)unit.getOwner()
+		        : null;
+		    if (other == null
+		        || other == serverPlayer
+		        || pending.contains(other)) continue; // No contact
+		    if (serverPlayer.csContact(other, cs)) {
+		        // First contact.  Note contact pending because
+		        // European first contact now requires a diplomacy
+		        // interaction to complete before leaving UNCONTACTED
+		        // state.
+		        pending.add(other);
+		        if (serverPlayer.isEuropean()) {
+		            if (other.isIndian()) {
+		                Tile offer = (firstLanding && other.owns(newTile))
+		                    ? newTile
+		                    : null;
+		                serverPlayer.csNativeFirstContact(other, offer, cs);
+		            } else {
+		                serverPlayer.csEuropeanFirstContact(this,
+		                    settlement, unit, cs);
+		            }
+		        } else {
+		            if (other.isIndian()) {
+		                ; // Do nothing
+		            } else {
+		                other.csNativeFirstContact(serverPlayer, null, cs);
+		            }
+		        }
+		    }
+
+		    // Initialize alarm for native settlements or units and
+		    // notify of contact.
+		    ServerPlayer contactPlayer = serverPlayer;
+		    IndianSettlement is = (settlement instanceof IndianSettlement)
+		        ? (IndianSettlement)settlement
+		        : null;
+		    if (is != null
+		        || (unit != null
+		            && (is = unit.getHomeIndianSettlement()) != null)
+		        || (unit != null
+		            && (contactPlayer = (ServerPlayer)unit.getOwner())
+		                .isEuropean()
+		            && (is = getHomeIndianSettlement()) != null
+		            && is.getTile() != null)) {
+		        Tile copied = is.getTile().getTileToCache();
+		        if (contactPlayer.hasExplored(is.getTile())
+		            && is.setContacted(contactPlayer)) {//-til
+		            is.getTile().cacheUnseen(copied);//+til
+		            cs.add(See.only(contactPlayer), is);
+		            // First European contact with native settlement.
+		            StringTemplate nation = is.getOwner().getNationLabel();
+		            cs.addMessage(See.only(contactPlayer),
+		                new ModelMessage(ModelMessage.MessageType.FOREIGN_DIPLOMACY,
+		                                 "model.unit.nativeSettlementContact",
+		                                 this, is)
+		                    .addStringTemplate("%nation%", nation)
+		                    .addName("%settlement%", is.getName()));
+		            logger.finest("First contact between "
+		                + contactPlayer.getId()
+		                + " and " + is + " at " + newTile);
+		        }                   
+		    }
+		    csActivateSentries(t, cs);
+		}
+	}
+
+	private void updateInvisibleTiles(final ServerPlayer serverPlayer, List<Tile> oldTiles) {
+		// Update tiles that are now invisible.
+        Iterator<Tile> it = oldTiles.iterator();
+        while (it.hasNext()) {
+            if (serverPlayer.canSee(it.next())) it.remove();
         }
-    }
+	}
 
 
     // Serialization

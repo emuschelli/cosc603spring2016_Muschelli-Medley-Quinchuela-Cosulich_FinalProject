@@ -80,42 +80,15 @@ public final class DragListener extends MouseAdapter {
                     + parentPanel);
                 return;
             }
-            QuickActionMenu menu
-                = new QuickActionMenu(freeColClient, parentPanel)
-                .addMenuItems(comp);
-            int lastIdx = menu.getComponentCount() - 1;
-            if (lastIdx >= 0
-                && menu.getComponent(lastIdx) instanceof JPopupMenu.Separator)
-                menu.remove(lastIdx);
-            if (menu.getComponentCount() <= 0) return;
-
-            final SwingGUI gui = (SwingGUI)freeColClient.getGUI();
-            boolean windows = System.getProperty("os.name").startsWith("Windows");
-            boolean small = Toolkit.getDefaultToolkit()
-                .getScreenSize().getHeight() < 768;
-            if (gui.isWindowed() && windows) {
-                // Work-around: JRE on Windows is unable to
-                // display popup menus that extend beyond the canvas.
-                menu.show(gui.getCanvas(), menu.getLocation().x, 0);
-            } else if (!gui.isWindowed() && small) {
-                // Move popup up when in full screen mode and when
-                // the screen size is too small to fit.  Similar
-                // to above workaround, but targeted for users
-                // with smaller screens such as netbooks.
-                menu.show(gui.getCanvas(), menu.getLocation().x, 0);
-            } else {
-                menu.show(comp, e.getX(), e.getY());
-            }
+            QuickActionMenu menu = menu(e, comp);
+			if (menu.getComponentCount() <= 0) return;
 
         } else {
             if (comp instanceof AbstractGoodsLabel) {
-                AbstractGoodsLabel label = (AbstractGoodsLabel)comp;
-                if (e.isShiftDown()) {
-                    label.setPartialChosen(true);
+                AbstractGoodsLabel label = label(e, comp);
+				if (e.isShiftDown()) {
                 } else if (e.isControlDown()) {
-                    label.setFullChosen(true);
                 } else {
-                    label.setPartialChosen(false);
                     label.setDefaultAmount();
                 }
             } else if (comp instanceof UnitLabel) {
@@ -128,10 +101,48 @@ public final class DragListener extends MouseAdapter {
                 }
             }
 
-            TransferHandler handler = comp.getTransferHandler();
-            if (handler != null) {
-                handler.exportAsDrag(comp, e, TransferHandler.COPY);
-            }
+            TransferHandler handler = handler(e, comp);
         }
     }
+
+
+	private AbstractGoodsLabel label(MouseEvent e, JComponent comp) {
+		AbstractGoodsLabel label = (AbstractGoodsLabel) comp;
+		if (e.isShiftDown()) {
+			label.setPartialChosen(true);
+		} else if (e.isControlDown()) {
+			label.setFullChosen(true);
+		} else {
+			label.setPartialChosen(false);
+		}
+		return label;
+	}
+
+
+	private TransferHandler handler(MouseEvent e, JComponent comp) {
+		TransferHandler handler = comp.getTransferHandler();
+		if (handler != null) {
+			handler.exportAsDrag(comp, e, TransferHandler.COPY);
+		}
+		return handler;
+	}
+
+
+	private QuickActionMenu menu(MouseEvent e, JComponent comp) throws java.awt.HeadlessException {
+		QuickActionMenu menu = new QuickActionMenu(freeColClient, parentPanel).addMenuItems(comp);
+		int lastIdx = menu.getComponentCount() - 1;
+		if (lastIdx >= 0 && menu.getComponent(lastIdx) instanceof JPopupMenu.Separator)
+			menu.remove(lastIdx);
+		final SwingGUI gui = (SwingGUI) freeColClient.getGUI();
+		boolean windows = System.getProperty("os.name").startsWith("Windows");
+		boolean small = Toolkit.getDefaultToolkit().getScreenSize().getHeight() < 768;
+		if (gui.isWindowed() && windows) {
+			menu.show(gui.getCanvas(), menu.getLocation().x, 0);
+		} else if (!gui.isWindowed() && small) {
+			menu.show(gui.getCanvas(), menu.getLocation().x, 0);
+		} else {
+			menu.show(comp, e.getX(), e.getY());
+		}
+		return menu;
+	}
 }

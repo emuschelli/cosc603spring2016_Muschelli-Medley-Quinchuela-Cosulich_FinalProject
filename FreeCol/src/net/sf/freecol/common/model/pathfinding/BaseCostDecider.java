@@ -60,7 +60,13 @@ class BaseCostDecider implements CostDecider {
               
         Tile oldTile = oldLocation.getTile();
         Tile newTile = newLocation.getTile();
-        if (oldLocation instanceof Europe) { // Coming from Europe
+        cost = commingFromEurope(unit, oldLocation, newLocation, movesLeftBefore, cost, oldTile, newTile);
+        return cost;
+    }
+
+	private int commingFromEurope(final Unit unit, final Location oldLocation, final Location newLocation,
+			int movesLeftBefore, int cost, Tile oldTile, Tile newTile) {
+		if (oldLocation instanceof Europe) { // Coming from Europe
             if (newLocation instanceof Europe
                 || newTile == null
                 || !newTile.isDirectlyHighSeasConnected()
@@ -107,25 +113,31 @@ class BaseCostDecider implements CostDecider {
                 return ILLEGAL_MOVE;
             }
 
-            cost = unit.getMoveCost(oldTile, newTile, movesLeftBefore);
-            if (cost <= movesLeftBefore) {
-                movesLeft = movesLeftBefore - cost;
-            } else { // This move takes an extra turn to complete:
-                final int thisTurnMovesLeft = movesLeftBefore;
-                int initialMoves = unit.getInitialMovesLeft();
-                final int moveCostNextTurn = unit.getMoveCost(oldTile, newTile,
-                                                              initialMoves);
-                cost = thisTurnMovesLeft + moveCostNextTurn;
-                movesLeft = initialMoves - moveCostNextTurn;
-                newTurns++;
-            }
-            if (consumeMove) {
-                cost += movesLeft;
-                movesLeft = 0;
-            }
+            cost = cost(unit, movesLeftBefore, oldTile, newTile, consumeMove);
         }
-        return cost;
-    }
+		return cost;
+	}
+
+	private int cost(final Unit unit, int movesLeftBefore, Tile oldTile, Tile newTile, boolean consumeMove) {
+		int cost;
+		cost = unit.getMoveCost(oldTile, newTile, movesLeftBefore);
+		if (cost <= movesLeftBefore) {
+		    movesLeft = movesLeftBefore - cost;
+		} else { // This move takes an extra turn to complete:
+		    final int thisTurnMovesLeft = movesLeftBefore;
+		    int initialMoves = unit.getInitialMovesLeft();
+		    final int moveCostNextTurn = unit.getMoveCost(oldTile, newTile,
+		                                                  initialMoves);
+		    cost = thisTurnMovesLeft + moveCostNextTurn;
+		    movesLeft = initialMoves - moveCostNextTurn;
+		    newTurns++;
+		}
+		if (consumeMove) {
+		    cost += movesLeft;
+		    movesLeft = 0;
+		}
+		return cost;
+	}
     
     /**
      * Gets the number of moves left after the proposed move.
