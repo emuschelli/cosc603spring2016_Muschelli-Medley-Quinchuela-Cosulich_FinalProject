@@ -1,0 +1,6 @@
+FreeCol/doc/specification.xsl
+FreeCol/doc/specification.css
+FreeCol/bin/net/sf/freecol/client/control/ConnectController.class
+FreeCol/bin/net/sf/freecol/client/control/InGameController.class
+*.class
+*.tex
