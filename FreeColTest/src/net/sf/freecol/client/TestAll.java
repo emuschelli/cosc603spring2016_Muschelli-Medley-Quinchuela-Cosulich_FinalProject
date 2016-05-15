@@ -1,4 +1,4 @@
-package net.sf.freecol;
+package net.sf.freecol.client;
 
 import org.junit.runner.JUnitCore;
 import org.junit.runner.RunWith;
@@ -15,8 +15,9 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	FreeColTest.class,
-	net.sf.freecol.client.TestAll.class,
+	FreeColClientTest.class,
+	ClientOptionsTest.class,
+	net.sf.freecol.client.control.TestAll.class,
 })
 public class TestAll {
 
