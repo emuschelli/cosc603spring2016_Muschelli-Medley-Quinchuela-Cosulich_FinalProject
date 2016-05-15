@@ -270,30 +270,8 @@ public class Building extends WorkLocation
             }
         }
 
-        // Then reduce the minimum ratio if some input is in short supply.
-        for (AbstractGoods input : getInputs()) {
-            long required = (long)Math.floor(input.getAmount() * minimumRatio);
-            long available = getAvailable(input.getType(), inputs);
-            // Do not allow auto-production to go negative.
-            if (canAutoProduce()) available = Math.max(0, available);
-            // Experts in factory level buildings may produce a
-            // certain amount of goods even when no input is available.
-            // Factories have the EXPERTS_USE_CONNECTIONS ability.
-            if (available < required
-                && hasAbility(Ability.EXPERTS_USE_CONNECTIONS)
-                && spec.getBoolean(GameOptions.EXPERTS_HAVE_CONNECTIONS)) {
-                long minimumGoodsInput = 4 // FIXME: magic number
-                    * count(getUnitList(), u -> u.getType() == getExpertUnitType());
-                if (minimumGoodsInput > available) {
-                    available = minimumGoodsInput;
-                }
-            }
-            // Scale production by limitations on availability.
-            if (available < required) {
-                minimumRatio *= (double)available / required;
-                //maximumRatio = Math.max(maximumRatio, minimumRatio);
-            }
-        }
+        minimumRatio = reduceMinRatio_InputShortSupply(inputs, spec,
+				minimumRatio);
 
         // Check whether there is space enough to store the goods
         // produced in order to avoid excess production.
@@ -303,16 +281,11 @@ public class Building extends WorkLocation
                 if (production <= 0) continue;
                 double headroom = (double)capacity
                     - getAvailable(output.getType(), outputs);
-                // Clamp production at warehouse capacity
-                if (production > headroom) {
-                    minimumRatio = Math.min(minimumRatio,
-                        headroom / output.getAmount());
-                }
+                minimumRatio = clampProductionAtWarehouse(minimumRatio, output,
+						production, headroom);
                 production = output.getAmount() * maximumRatio;
-                if (production > headroom) {
-                    maximumRatio = Math.min(maximumRatio, 
-                        headroom / output.getAmount());
-                }
+                maximumRatio = clampProductionAtWarehouse(maximumRatio, output,
+						production, headroom);
             }
         }
 
@@ -329,7 +302,19 @@ public class Building extends WorkLocation
                 result.addMaximumConsumption(new AbstractGoods(type, maximumConsumption));
             }
         }
-        for (AbstractGoods output : getOutputs()) {
+        abstractGoodsOutput(result, maximumRatio, minimumRatio, epsilon);
+        return result;
+    }
+
+	/**
+	 * @param result
+	 * @param maximumRatio
+	 * @param minimumRatio
+	 * @param epsilon
+	 */
+	private void abstractGoodsOutput(ProductionInfo result,
+			double maximumRatio, double minimumRatio, final double epsilon) {
+		for (AbstractGoods output : getOutputs()) {
             GoodsType type = output.getType();
             // minimize production, but add a magic little something
             // to counter rounding errors
@@ -342,8 +327,85 @@ public class Building extends WorkLocation
                 result.addMaximumProduction(new AbstractGoods(type, maximumProduction));
             }
         }
-        return result;
-    }
+	}
+
+	/**
+	 * @param minimumRatio
+	 * @param output
+	 * @param production
+	 * @param headroom
+	 * @return
+	 */
+	private double clampProductionAtWarehouse(double minimumRatio,
+			AbstractGoods output, double production, double headroom) {
+		// Clamp production at warehouse capacity
+		if (production > headroom) {
+		    minimumRatio = Math.min(minimumRatio,
+		        headroom / output.getAmount());
+		}
+		return minimumRatio;
+	}
+
+	/**
+	 * @param inputs
+	 * @param spec
+	 * @param minimumRatio
+	 * @return
+	 */
+	private double reduceMinRatio_InputShortSupply(List<AbstractGoods> inputs,
+			final Specification spec, double minimumRatio) {
+		// Then reduce the minimum ratio if some input is in short supply.
+        for (AbstractGoods input : getInputs()) {
+            long required = (long)Math.floor(input.getAmount() * minimumRatio);
+            long available = getAvailable(input.getType(), inputs);
+            // Do not allow auto-production to go negative.
+            if (canAutoProduce()) available = Math.max(0, available);
+            // Experts in factory level buildings may produce a
+            // certain amount of goods even when no input is available.
+            // Factories have the EXPERTS_USE_CONNECTIONS ability.
+            minimumRatio = scaleProductionByLimit(spec, minimumRatio, required,
+					available);
+        }
+		return minimumRatio;
+	}
+
+	/**
+	 * @param spec
+	 * @param minimumRatio
+	 * @param required
+	 * @param available
+	 * @return
+	 */
+	private double scaleProductionByLimit(final Specification spec,
+			double minimumRatio, long required, long available) {
+		available = factoriesExpertUse(spec, required, available);
+		// Scale production by limitations on availability.
+		if (available < required) {
+		    minimumRatio *= (double)available / required;
+		    //maximumRatio = Math.max(maximumRatio, minimumRatio);
+		}
+		return minimumRatio;
+	}
+
+	/**
+	 * @param spec
+	 * @param required
+	 * @param available
+	 * @return
+	 */
+	private long factoriesExpertUse(final Specification spec, long required,
+			long available) {
+		if (available < required
+		    && hasAbility(Ability.EXPERTS_USE_CONNECTIONS)
+		    && spec.getBoolean(GameOptions.EXPERTS_HAVE_CONNECTIONS)) {
+		    long minimumGoodsInput = 4 // FIXME: magic number
+		        * count(getUnitList(), u -> u.getType() == getExpertUnitType());
+		    if (minimumGoodsInput > available) {
+		        available = minimumGoodsInput;
+		    }
+		}
+		return available;
+	}
 
     /**
      * Evaluate this work location for a given player.
